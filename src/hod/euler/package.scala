@@ -121,10 +121,10 @@ package object euler {
   }
 
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
-    def continuedFractions: Iterator[BigInt] = {
+    def continuedFractions: Iterator[Long] = {
       var remaining = bd
 
-      def nextWhole: BigInt = remaining.toBigInt
+      def nextWhole: Long = remaining.toLong
 
       Iterator.continually {
         val nextValue = nextWhole
