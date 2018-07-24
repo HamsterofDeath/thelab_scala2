@@ -114,6 +114,15 @@ package object euler {
         cache(i)
       }
     }
+
+    def stopAfter(isLastAccepted:T => Boolean): Iterator[T] = {
+      var stop = false
+      it.takeWhile { e =>
+        val take = !stop
+        stop = isLastAccepted(e)
+        take
+      }
+    }
   }
 
   def stop() = {
