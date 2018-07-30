@@ -5,6 +5,71 @@ import scala.collection.mutable
 
 package object euler {
 
+  sealed trait ComparisonResult
+  case object TargetIsSmaller extends ComparisonResult
+  case object TargetIsEqual extends ComparisonResult
+  case object TargetIsBigger extends ComparisonResult
+
+  abstract class SearchSpace[T] {
+    def nextHigherBound(t:T):T
+    def nextLowerBound(t:T):T
+    def determineMiddle(a:T, b:T):T
+    def compareTargetAgainst(reference:T):ComparisonResult
+
+  }
+
+  def approachBinary[T](start:T, searchSpace:SearchSpace[T]): Iterator[T] = {
+    var (min, max) = {
+      var adjustableLimit = start
+      def state: ComparisonResult = {
+        searchSpace.compareTargetAgainst(adjustableLimit)
+      }
+      state match {
+        case TargetIsSmaller =>
+          while (state == TargetIsSmaller) {
+            adjustableLimit = searchSpace.nextLowerBound(adjustableLimit)
+          }
+          (adjustableLimit, start)
+        case TargetIsEqual =>
+          (start, start)
+        case TargetIsBigger =>
+          while (state == TargetIsBigger) {
+            adjustableLimit = searchSpace.nextHigherBound(adjustableLimit)
+          }
+          (start, adjustableLimit)
+      }
+    }
+
+    var result = Option.empty[T]
+
+    def nextCloserElement() = {
+      val middle: T = searchSpace.determineMiddle(min, max)
+
+      val cmpMin = searchSpace.compareTargetAgainst(min)
+      val cmpMiddle = searchSpace.compareTargetAgainst(middle)
+      val cmpMax = searchSpace.compareTargetAgainst(max)
+      val nextTry = {
+        (cmpMin, cmpMiddle, cmpMax) match {
+          case (TargetIsBigger, TargetIsSmaller,_) =>
+            max = middle
+          case (_, TargetIsBigger,TargetIsSmaller) =>
+            min = middle
+          case (TargetIsEqual,_,_) =>
+            result = Some(min)
+          case (_,TargetIsEqual,_) =>
+            result = Some(middle)
+          case (_,_,TargetIsEqual) =>
+            result = Some(max)
+          case trip@_ => throw new RuntimeException(s"inconsistent state: $trip on $min, $middle, $max")
+        }
+        middle
+      }
+      nextTry
+    }
+    Iterator.continually(nextCloserElement()).stopAfter(_ => result.nonEmpty)
+
+  }
+
   def allPrimes: Iterator[Int] = {
     Iterator(2, 3) ++ Iterator.from(5, 2).filter(_.isPrime)
   }
