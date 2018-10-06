@@ -3,7 +3,6 @@ package hod
 import java.math.{BigInteger, MathContext, RoundingMode}
 import scala.collection.mutable
 
-
 package object euler {
 
   def noop(): Unit = {}
@@ -14,19 +13,21 @@ package object euler {
   case object TargetIsBigger extends ComparisonResult
 
   abstract class SearchSpace[T] {
-    def nextHigherBound(t:T):T
-    def nextLowerBound(t:T):T
-    def determineMiddle(a:T, b:T):T
-    def compareTargetAgainst(reference:T):ComparisonResult
+    def nextHigherBound(t: T): T
+    def nextLowerBound(t: T): T
+    def determineMiddle(a: T, b: T): T
+    def compareTargetAgainst(reference: T): ComparisonResult
 
   }
 
-  def approachBinary[T](start:T, searchSpace:SearchSpace[T]): Iterator[T] = {
+  def approachBinary[T](start: T, searchSpace: SearchSpace[T]): Iterator[T] = {
     var (min, max) = {
       var adjustableLimit = start
+
       def state: ComparisonResult = {
         searchSpace.compareTargetAgainst(adjustableLimit)
       }
+
       state match {
         case TargetIsSmaller =>
           while (state == TargetIsSmaller) {
@@ -53,15 +54,15 @@ package object euler {
       val cmpMax = searchSpace.compareTargetAgainst(max)
       val nextTry = {
         (cmpMin, cmpMiddle, cmpMax) match {
-          case (TargetIsBigger, TargetIsSmaller,_) =>
+          case (TargetIsBigger, TargetIsSmaller, _) =>
             max = middle
-          case (_, TargetIsBigger,TargetIsSmaller) =>
+          case (_, TargetIsBigger, TargetIsSmaller) =>
             min = middle
-          case (TargetIsEqual,_,_) =>
+          case (TargetIsEqual, _, _) =>
             result = Some(min)
-          case (_,TargetIsEqual,_) =>
+          case (_, TargetIsEqual, _) =>
             result = Some(middle)
-          case (_,_,TargetIsEqual) =>
+          case (_, _, TargetIsEqual) =>
             result = Some(max)
           case trip@_ => throw new RuntimeException(s"inconsistent state: $trip on $min, $middle, $max")
         }
@@ -69,6 +70,7 @@ package object euler {
       }
       nextTry
     }
+
     Iterator.continually(nextCloserElement()).stopAfter(_ => result.nonEmpty)
 
   }
@@ -109,7 +111,7 @@ package object euler {
   implicit class LongOps(val l: Long) extends AnyVal {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      val mc = new MathContext(scale+1, RoundingMode.HALF_UP)
+      val mc = new MathContext(scale + 1, RoundingMode.HALF_UP)
       BigDecimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
@@ -183,7 +185,7 @@ package object euler {
       }
     }
 
-    def stopAfter(isLastAccepted:T => Boolean): Iterator[T] = {
+    def stopAfter(isLastAccepted: T => Boolean): Iterator[T] = {
       var stop = false
       it.takeWhile { e =>
         val take = !stop
@@ -193,7 +195,7 @@ package object euler {
     }
 
     def lastElement: T = {
-      var ret:T = null.asInstanceOf[T]
+      var ret: T = null.asInstanceOf[T]
       while (it.hasNext) {
         ret = it.next()
       }
@@ -203,6 +205,13 @@ package object euler {
 
   def stop() = {
     println("stop")
+  }
+
+  implicit class BigIntOps(val bi: BigInt) extends AnyVal {
+    def sqrt(scale: Int) = {
+      val mc = new MathContext(scale + 1, RoundingMode.HALF_UP)
+      BigDecimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
+    }
   }
 
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
