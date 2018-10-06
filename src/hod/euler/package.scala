@@ -6,6 +6,8 @@ import scala.collection.mutable
 
 package object euler {
 
+  def noop(): Unit = {}
+
   sealed trait ComparisonResult
   case object TargetIsSmaller extends ComparisonResult
   case object TargetIsEqual extends ComparisonResult
