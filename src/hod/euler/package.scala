@@ -212,6 +212,10 @@ package object euler {
       val mc = new MathContext(scale + 1, RoundingMode.HALF_UP)
       BigDecimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
     }
+
+    def toBigDecimal = {
+      BigDecimal(new java.math.BigDecimal(bi.bigInteger))
+    }
   }
 
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
