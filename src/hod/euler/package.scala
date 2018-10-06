@@ -3,6 +3,7 @@ package hod
 import java.math.{BigInteger, MathContext, RoundingMode}
 import scala.collection.mutable
 
+
 package object euler {
 
   sealed trait ComparisonResult
@@ -106,7 +107,7 @@ package object euler {
   implicit class LongOps(val l: Long) extends AnyVal {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      val mc = new MathContext(scale, RoundingMode.HALF_UP)
+      val mc = new MathContext(scale+1, RoundingMode.HALF_UP)
       BigDecimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
@@ -188,6 +189,14 @@ package object euler {
         take
       }
     }
+
+    def lastElement: T = {
+      var ret:T = null.asInstanceOf[T]
+      while (it.hasNext) {
+        ret = it.next()
+      }
+      ret
+    }
   }
 
   def stop() = {
@@ -195,6 +204,12 @@ package object euler {
   }
 
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
+
+    def fractionalPart: BigDecimal = {
+      val whole = bd.toBigInt()
+      bd - BigDecimal(whole)
+    }
+
     def continuedFractions: Iterator[Long] = {
       var remaining = bd
 
