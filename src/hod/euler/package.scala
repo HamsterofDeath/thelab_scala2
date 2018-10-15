@@ -92,6 +92,10 @@ package object euler {
     }
   }
 
+  implicit class IterableOps[T](val i:Iterable[T]) extends AnyVal {
+    def allValuesDistinct = i.toSet.size == i.size
+  }
+
   implicit class IntOps(val i: Int) extends AnyVal {
 
     def isPrime: Boolean = {
