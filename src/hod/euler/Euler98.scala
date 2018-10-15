@@ -35,7 +35,8 @@ object Euler98 {
             fittingSquares.map { digits =>
               digits.zip(word)
             }.filter { digitToChar =>
-              digitToChar.toMap == digitToChar.reverse.toMap
+              val sorted = digitToChar.sorted
+              sorted.toMap == sorted.reverse.toMap
             }.map(_.toMap)
           }
           possibleMappings
