@@ -1,7 +1,8 @@
 package hod
 
-import java.math.{BigInteger, MathContext, RoundingMode}
+import java.math.{BigInteger, MathContext}
 import scala.collection.mutable
+import scala.math.BigDecimal.RoundingMode
 
 package object euler {
 
@@ -111,7 +112,7 @@ package object euler {
   implicit class LongOps(val l: Long) extends AnyVal {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      val mc = new MathContext(scale + 1, RoundingMode.HALF_UP)
+      val mc = new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
@@ -209,7 +210,7 @@ package object euler {
 
   implicit class BigIntOps(val bi: BigInt) extends AnyVal {
     def sqrt(scale: Int) = {
-      val mc = new MathContext(scale + 1, RoundingMode.HALF_UP)
+      val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
     }
 
@@ -290,7 +291,7 @@ package object euler {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
       java.math.BigDecimal.valueOf(d)
-      .sqrt(new MathContext(scale, RoundingMode.HALF_UP))
+      .sqrt(new java.math.MathContext(scale, java.math.RoundingMode.HALF_UP))
     }
 
     def isNatural: Boolean = {
