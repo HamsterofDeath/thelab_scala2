@@ -11,19 +11,35 @@ package object euler {
   case object TargetIsBigger extends ComparisonResult
 
   abstract class SearchSpace[T] {
-    def nextHigherBound(t:T):T
-    def nextLowerBound(t:T):T
-    def determineMiddle(a:T, b:T):T
-    def compareTargetAgainst(reference:T):ComparisonResult
+    def nextHigherBound(t: T): T
+    def nextLowerBound(t: T): T
+    def determineMiddle(a: T, b: T): T
+    def compareTargetAgainst(reference: T): ComparisonResult
 
   }
 
-  def approachBinary[T](start:T, searchSpace:SearchSpace[T]): Iterator[T] = {
+  implicit class IterableOps[T](val it: TraversableOnce[T]) extends AnyVal {
+    def occurences = {
+      val data = mutable.HashMap.empty[T, Int]
+      it.foreach { e =>
+        if (data.contains(e)) {
+          data.put(e, data(e) + 1)
+        } else {
+          data.put(e, 1)
+        }
+      }
+      data
+    }
+  }
+
+  def approachBinary[T](start: T, searchSpace: SearchSpace[T]): Iterator[T] = {
     var (min, max) = {
       var adjustableLimit = start
+
       def state: ComparisonResult = {
         searchSpace.compareTargetAgainst(adjustableLimit)
       }
+
       state match {
         case TargetIsSmaller =>
           while (state == TargetIsSmaller) {
@@ -50,15 +66,15 @@ package object euler {
       val cmpMax = searchSpace.compareTargetAgainst(max)
       val nextTry = {
         (cmpMin, cmpMiddle, cmpMax) match {
-          case (TargetIsBigger, TargetIsSmaller,_) =>
+          case (TargetIsBigger, TargetIsSmaller, _) =>
             max = middle
-          case (_, TargetIsBigger,TargetIsSmaller) =>
+          case (_, TargetIsBigger, TargetIsSmaller) =>
             min = middle
-          case (TargetIsEqual,_,_) =>
+          case (TargetIsEqual, _, _) =>
             result = Some(min)
-          case (_,TargetIsEqual,_) =>
+          case (_, TargetIsEqual, _) =>
             result = Some(middle)
-          case (_,_,TargetIsEqual) =>
+          case (_, _, TargetIsEqual) =>
             result = Some(max)
           case trip@_ => throw new RuntimeException(s"inconsistent state: $trip on $min, $middle, $max")
         }
@@ -66,12 +82,25 @@ package object euler {
       }
       nextTry
     }
+
     Iterator.continually(nextCloserElement()).stopAfter(_ => result.nonEmpty)
 
   }
 
   def allPrimes: Iterator[Int] = {
     Iterator(2, 3) ++ Iterator.from(5, 2).filter(_.isPrime)
+  }
+
+  def allPrimesLong: Iterator[Long] = {
+    var next = 5L
+
+    def addTwoAndReturn = {
+      val ret = next
+      next += 2
+      ret
+    }
+
+    Iterator(2L, 3L) ++ Iterator.continually(addTwoAndReturn).filter(_.isPrime)
   }
 
   def primes(n: Int): Iterator[Int] = {
@@ -180,7 +209,7 @@ package object euler {
       }
     }
 
-    def stopAfter(isLastAccepted:T => Boolean): Iterator[T] = {
+    def stopAfter(isLastAccepted: T => Boolean): Iterator[T] = {
       var stop = false
       it.takeWhile { e =>
         val take = !stop
