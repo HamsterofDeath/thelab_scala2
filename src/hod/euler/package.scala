@@ -1,9 +1,12 @@
 package hod
 
-import java.math.{BigInteger, MathContext, RoundingMode}
+import java.math.{BigInteger, MathContext}
 import scala.collection.mutable
+import scala.math.BigDecimal.RoundingMode
 
 package object euler {
+
+  def noop(): Unit = {}
 
   sealed trait ComparisonResult
   case object TargetIsSmaller extends ComparisonResult
@@ -115,6 +118,10 @@ package object euler {
     }
   }
 
+  implicit class IterableOps[T](val i:Iterable[T]) extends AnyVal {
+    def allValuesDistinct = i.toSet.size == i.size
+  }
+
   implicit class IntOps(val i: Int) extends AnyVal {
 
     def isPrime: Boolean = {
@@ -135,7 +142,7 @@ package object euler {
   implicit class LongOps(val l: Long) extends AnyVal {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      val mc = new MathContext(scale, RoundingMode.HALF_UP)
+      val mc = new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
@@ -217,13 +224,38 @@ package object euler {
         take
       }
     }
+
+    def lastElement: T = {
+      var ret: T = null.asInstanceOf[T]
+      while (it.hasNext) {
+        ret = it.next()
+      }
+      ret
+    }
   }
 
   def stop() = {
     println("stop")
   }
 
+  implicit class BigIntOps(val bi: BigInt) extends AnyVal {
+    def sqrt(scale: Int) = {
+      val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
+      BigDecimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
+    }
+
+    def toBigDecimal = {
+      BigDecimal(new java.math.BigDecimal(bi.bigInteger))
+    }
+  }
+
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
+
+    def fractionalPart: BigDecimal = {
+      val whole = bd.toBigInt()
+      bd - BigDecimal(whole)
+    }
+
     def continuedFractions: Iterator[Long] = {
       var remaining = bd
 
@@ -289,7 +321,7 @@ package object euler {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
       java.math.BigDecimal.valueOf(d)
-      .sqrt(new MathContext(scale, RoundingMode.HALF_UP))
+      .sqrt(new java.math.MathContext(scale, java.math.RoundingMode.HALF_UP))
     }
 
     def isNatural: Boolean = {
