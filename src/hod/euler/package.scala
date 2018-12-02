@@ -21,7 +21,7 @@ package object euler {
 
   }
 
-  implicit class IterableOps[T](val it: TraversableOnce[T]) extends AnyVal {
+  implicit class IterableOnceOps[T](val it: TraversableOnce[T]) extends AnyVal {
     def occurences = {
       val data = mutable.HashMap.empty[T, Int]
       it.foreach { e =>
