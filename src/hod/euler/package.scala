@@ -1,8 +1,10 @@
 package hod
 
+import java.io.{BufferedInputStream, BufferedReader, File, FileInputStream, FileReader, FileWriter}
 import java.math.{BigInteger, MathContext}
 import scala.collection.mutable
 import scala.math.BigDecimal.RoundingMode
+import scala.util.{Failure, Success, Try}
 
 package object euler {
 
@@ -95,15 +97,73 @@ package object euler {
   }
 
   def allPrimesLong: Iterator[Long] = {
-    var next = 5L
-
-    def addTwoAndReturn = {
-      val ret = next
-      next += 2
-      ret
+    val cacheFile = {
+      val f = new File("resource/primes.txt")
+      if (!f.exists()) {
+        val ok = f.createNewFile()
+        require(ok, s"cannot create ${f.getAbsolutePath}")
+      }
+      f
     }
 
-    Iterator(2L, 3L) ++ Iterator.continually(addTwoAndReturn).filter(_.isPrime)
+    var maxPrimeRead = 0L
+
+    val fromFile: Iterator[Long] = {
+      val in = new BufferedReader(new FileReader(cacheFile), 1024 * 1024)
+      var row = 0
+      def nextPrime = {
+        val next = in.readLine()
+        row += 1
+        if (next == null) {
+          maxPrimeRead += 2
+          None
+        } else {
+          val num = {
+            Try(next.toLong) match {
+              case Failure(exception) =>
+                throw new RuntimeException(s"Cannot parse value $next in line $row")
+              case Success(value) => value
+            }
+          }
+          require(num > maxPrimeRead, s"$num was <= $maxPrimeRead")
+          maxPrimeRead = num
+          Some(num)
+        }
+      }
+      Iterator.continually(nextPrime).takeWhile(_.isDefined).map(_.get)
+    }
+
+
+    lazy val writer = {
+      new FileWriter(cacheFile, true)
+    }
+
+    def calculatedRemainingPrimes = {
+      var next = 5L max maxPrimeRead
+
+      def returnAndAddTwo = {
+        val ret = next
+        next += 2
+        ret
+      }
+
+      println(s"switching to calculation mode at $next")
+      Iterator.continually(returnAndAddTwo)
+        .grouped(8000)
+        .flatMap { chunk =>
+          val subSet = {
+            chunk.par.filter(_.isPrime).seq
+          }
+          subSet.foreach {prime =>
+            writer.append(prime.toString)
+            writer.append('\n')
+          }
+          writer.flush()
+          subSet
+        }
+    }
+
+    Iterator(2L, 3L) ++ fromFile ++ calculatedRemainingPrimes
   }
 
   def primes(n: Int): Iterator[Int] = {
@@ -118,7 +178,7 @@ package object euler {
     }
   }
 
-  implicit class IterableOps[T](val i:Iterable[T]) extends AnyVal {
+  implicit class IterableOps[T](val i: Iterable[T]) extends AnyVal {
     def allValuesDistinct = i.toSet.size == i.size
   }
 
@@ -201,6 +261,7 @@ package object euler {
   }
 
   implicit class IteratorOps[T](val it: Iterator[T]) extends AnyVal {
+
     def memoizedByIndex: Int => T = {
       val cache = mutable.HashMap.empty[Int, T]
       var maxEvaluated = -1
