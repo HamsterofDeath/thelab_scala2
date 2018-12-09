@@ -2,9 +2,10 @@ package hod.euler
 
 object Euler58 {
   def main(args: Array[String]): Unit = {
-    def sideLength(step:Int) = {
+    def sideLength(step: Int) = {
       step * 2 + 1
     }
+
     def edges(n: Int) = {
       val lineLength = sideLength(n)
       val lowerRight = lineLength * lineLength
@@ -31,13 +32,12 @@ object Euler58 {
     }
 
     println {
-      s"""$primes primes
-         |$nonPrimes non primes
-         |${primes + nonPrimes} total
-         |${sideLength(size)} side length
-         |${primes / (primes + nonPrimes).toDouble} ratio""".stripMargin
+      s"""|$primes primes
+          |$nonPrimes non primes
+          |${primes + nonPrimes} total
+          |${sideLength(size)} side length
+          |${primes / (primes + nonPrimes).toDouble} ratio""".stripMargin
     }
-
 
   }
 }
