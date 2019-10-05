@@ -1,6 +1,8 @@
 package hod.euler
 
 import scala.collection.mutable
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 object Euler134 {
   def main(args: Array[String]): Unit = {
@@ -9,27 +11,32 @@ object Euler134 {
         .drop(2)
         .stopAfter(_ > 1000000)
     }
-    val solutions = {
+    implicit val ctx = ExecutionContext.global
+    def solutions = {
       samples
         .sliding(2, 1)
         .toVector
-        .par
         .map { case Seq(p1, p2) =>
-        val solution = {
-          val endsWith = p1.toString
-          val mod = math.pow(10, endsWith.length).toLong
-          var test = p2.toLong
-          while (test % mod != p1) {
-            test += p2
+        Future {
+          val solution = {
+            val endsWith = p1.toString
+            val mod      = math.pow(10, endsWith.length).toLong
+            var test     = p2.toLong
+            while (test % mod != p1) {
+              test += p2
+            }
+            test
           }
-          test
+          //println(s"p1 = $p1, solution = $solution")
+          solution
         }
-          print('.')
-        //println(s"p1 = $p1, solution = $solution")
-        solution
       }
     }
-    val finalSolutions = solutions.sum
-    println(finalSolutions)
+    def finalSolutions = solutions.map { e =>
+      Await.result(e, Duration.Inf)
+    }.sum
+    measured {
+      println(finalSolutions)
+    }
   }
 }

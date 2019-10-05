@@ -16,6 +16,15 @@ package object euler {
   case object TargetIsEqual extends ComparisonResult
   case object TargetIsBigger extends ComparisonResult
 
+  def measured[T](t: => T) ={
+    println("Operation start")
+    val start = System.currentTimeMillis()
+    val ret = t
+    val end = System.currentTimeMillis()
+    println(s"Operation took ${(end.toDouble - start)/1000} sec")
+    ret
+  }
+
   abstract class SearchSpace[T] {
     def nextHigherBound(t: T): T
     def nextLowerBound(t: T): T

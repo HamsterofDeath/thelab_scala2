@@ -48,7 +48,6 @@ object Euler98 {
           fittingSquares.map { digits =>
             word.zip(digits)
           }.filter { digitToChar =>
-            val sorted = digitToChar.sorted
             val digits = digitToChar.map(_._1)
             val chars = digitToChar.map(_._2)
             digits.allValuesDistinct &&

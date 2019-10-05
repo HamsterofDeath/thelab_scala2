@@ -152,7 +152,7 @@ object Euler88 {
       }
     }
 
-    val explain = {
+    def explain = {
       smallest
       .toList
       .sortBy(_._1)
