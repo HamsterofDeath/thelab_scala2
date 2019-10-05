@@ -1,6 +1,6 @@
 package hod.euler
 
-import scala.collection.mutable
+import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -11,7 +11,7 @@ object Euler134 {
         .drop(2)
         .stopAfter(_ > 1000000)
     }
-    implicit val ctx = ExecutionContext.global
+    implicit val ctx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
     def solutions = {
       samples
         .sliding(2, 1)
