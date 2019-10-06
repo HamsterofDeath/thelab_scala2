@@ -1,20 +1,21 @@
 package hod.euler
 
-import collection._
+import java.io.File
 import java.util
-import scala.reflect.io.File
+import scala.collection._
+import scala.collection.parallel.CollectionConverters._
 
 /**
-  * Developed with pleasure
-  * User: hamsterofdeath
-  * Date: 05.10.12
-  * Time: 08:48
-  */
+ * Developed with pleasure
+ * User: hamsterofdeath
+ * Date: 05.10.12
+ * Time: 08:48
+ */
 object Euler96 {
 
   def main(args: Array[String]) {
     type MyBitSet = RawLongBits
-    trait Bits[SELF <: Bits[SELF]] extends Traversable[Int] {
+    trait Bits[SELF <: Bits[SELF]] extends Foreach[Int] {
       def on(i: Int)
       def off(i: Int)
       def clear()
@@ -111,12 +112,8 @@ object Euler96 {
         freeNumbersVolatile
       }
 
-      def myReferences: Traversable[NineCells] = new Traversable[NineCells] {
-        def foreach[U](f: NineCells => U) {
-          f(row)
-          f(col)
-          f(block)
-        }
+      def myReferences: Iterable[NineCells] = new Iterable[NineCells] {
+        override def iterator: Iterator[NineCells] = Iterator(row, col, block)
       }
     }
     abstract class NineCells(val cells: Array[Cell], val free: MyBitSet = nineBitSet) {
@@ -160,7 +157,7 @@ object Euler96 {
 
       def isSolved: Boolean = openCellCount == 0
 
-      def allNines: Traversable[NineCells] = new Traversable[NineCells] {
+      def allNines = new Foreach[NineCells] {
         def foreach[U](f: NineCells => U) {
           rows.foreach(f)
           cols.foreach(f)
@@ -187,9 +184,9 @@ object Euler96 {
 
     def block2xy(block: Int) = ((block % 3) * 3) -> ((block / 3) * 3)
 
-    def block2Area(block: Int): Traversable[Int] = {
+    def block2Area(block: Int): Foreach[Int] = {
       val upperLeft = block2xy(block)
-      new Traversable[Int] {
+      new Foreach[Int] {
         def foreach[U](f: Int => U) {
           for (row <- 0 to 2; col <- 0 to 2) {
             f(xy2Index(upperLeft._1 + col, upperLeft._2 + row))
@@ -205,7 +202,7 @@ object Euler96 {
       val blocks = {
         val cellGroups = for (block <- 0 to 8) yield block2Area(block)
                                                      .map(indices => rowsConcatenated(indices))
-        for (nine <- cellGroups) yield new Block(nine.toArray)
+        for (nine <- cellGroups) yield new Block(nine.iterator.toArray)
       }
       val sudoku = new Sudoku(rowsConcatenated, rows, cols, blocks.toArray)
       sudoku.allNines.foreach(_.initReferences())
@@ -247,12 +244,12 @@ object Euler96 {
 
     val sum = {
       val groupedToFields = {
-        File("resource/sudoku.txt")
-        .lines()
-        .sliding(10, 10)
-        .map { tenLines =>
-          tenLines.drop(1).mkString
-        }
+        new File("resource/sudoku.txt")
+          .slurp
+          .sliding(10, 10)
+          .map { tenLines =>
+            tenLines.drop(1).mkString
+          }
       }
       val toSolve = groupedToFields.toArray.par.map(parse)
       toSolve.foreach(solve)

@@ -1,13 +1,33 @@
 package hod
 
 import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream,
-  FileReader, FileWriter, InputStreamReader}
+  FileReader}
 import java.math.{BigInteger, MathContext}
+import java.util.concurrent.Executors
 import scala.collection.mutable
-import scala.math.BigDecimal.RoundingMode
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 package object euler {
+
+  def executionContextForThreads(threadCount: Int = Runtime.getRuntime.availableProcessors()): ExecutionContextExecutor = ExecutionContext
+    .fromExecutor(Executors.newFixedThreadPool(threadCount))
+
+  trait Foreach[T] {
+    self =>
+
+    def iterator = {
+      val buffer = mutable.ArrayBuffer.empty[T]
+      foreach(buffer += _)
+      buffer.iterator
+    }
+
+    def foreach[U](f: T => U): Unit
+    def map[N](f: T => N): Foreach[N] = new Foreach[N] {
+      override def foreach[U](nf: N => U): Unit = {
+        self.foreach(e => nf(f(e)))
+      }
+    }
+  }
 
   def noop(): Unit = {}
 
@@ -16,7 +36,7 @@ package object euler {
   case object TargetIsEqual extends ComparisonResult
   case object TargetIsBigger extends ComparisonResult
 
-  def measured[T](t: => T) ={
+  def measured[T](t: => T) = {
     println("Operation start")
     val start = System.currentTimeMillis()
     val ret = t
@@ -33,7 +53,7 @@ package object euler {
 
   }
 
-  implicit class IterableOnceOps[T](val it: TraversableOnce[T]) extends AnyVal {
+  implicit class IterableOnceOps[T](val it: IterableOnce[T]) extends AnyVal {
     def occurences = {
       val data = mutable.HashMap.empty[T, Int]
       it.foreach { e =>
@@ -106,6 +126,20 @@ package object euler {
     Iterator(2, 3) ++ Iterator.from(5, 2).filter(_.isPrime)
   }
 
+  implicit class FileOps(f: File) {
+    def slurp = {
+      val in  = new FileReader(f)
+      val bin = new BufferedReader(in, 4096)
+      Iterator.continually(bin.readLine()).takeWhile { e =>
+        val stop = e == null
+        if (stop) bin.close()
+        !stop
+      }
+    }
+
+    def slurpWhole = slurp.mkString("\n")
+  }
+
   def allPrimesLong: Iterator[Long] = {
     val cacheFile = {
       val f = new File("resource/primes.data")
@@ -166,7 +200,7 @@ package object euler {
       .grouped(12345)
       .flatMap { chunk =>
         val subSet = {
-          chunk.par.filter(_.isPrime).seq
+          chunk.filter(_.isPrime)
         }
         subSet.foreach { prime =>
           writer.writeLong(prime)
@@ -216,7 +250,7 @@ package object euler {
 
     def sqrtPrecise(scale: Int): BigDecimal = {
       val mc = new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
-      BigDecimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
+      BigDecimal.decimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
     def isPerfectSquare: Boolean = {
@@ -315,7 +349,7 @@ package object euler {
   implicit class BigIntOps(val bi: BigInt) extends AnyVal {
     def sqrt(scale: Int) = {
       val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
-      BigDecimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
+      BigDecimal.decimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
     }
 
     def toBigDecimal = {
@@ -326,7 +360,7 @@ package object euler {
   implicit class BigDecimalOps(val bd: BigDecimal) extends AnyVal {
 
     def fractionalPart: BigDecimal = {
-      val whole = bd.toBigInt()
+      val whole = bd.toBigInt
       bd - BigDecimal(whole)
     }
 

@@ -1,6 +1,6 @@
 package hod.euler
 
-import scala.Option
+import scala.collection.parallel.CollectionConverters._
 import scala.collection.{immutable, mutable}
 import scala.language.postfixOps
 

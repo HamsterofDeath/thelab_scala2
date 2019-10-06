@@ -358,7 +358,7 @@ object Euler185 {
                     if (debug) {
                       val label = if (reversed) "Reversed" else "Applied"
                       println {
-                        s"${0 to depth map { _ => " " } mkString}" +
+                        s"${(0 to depth).map { _ => " " }.mkString}" +
                         s"$label ${currentSequence.shortDescribe}," +
                         s"assuming as correct ${currentSequence.describeWithAssumption(assumedCorrectIndexes)}," +
                         s"whitelist is at ${whiteList.describeCurrentSolution}," +

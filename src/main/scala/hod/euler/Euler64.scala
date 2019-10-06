@@ -1,5 +1,7 @@
 package hod.euler
 
+import scala.collection.parallel.CollectionConverters._
+
 object Euler64 {
   def main(args: Array[String]): Unit = {
     val count = {

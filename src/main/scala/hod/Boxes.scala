@@ -39,6 +39,6 @@ object Boxes {
     }
     val readMe = results.sortBy(e => e._2.sum.toDouble / e._2.size).reverse
     val stats = readMe.map { case (a,b) => a -> b.groupBy(identity).map { case (a, c) => c.size -> a}}
-    stats
+    println(stats)
   }
 }

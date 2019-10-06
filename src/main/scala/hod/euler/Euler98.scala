@@ -1,19 +1,19 @@
 package hod.euler
 
-import scala.reflect.io.File
+import java.io.File
 
 object Euler98 {
   def main(args: Array[String]): Unit = {
-    val file = File("resource/p98words.txt")
-    val words = {
+    val file     = new File("resource/p98words.txt")
+    val words    = {
       file
-      .slurp()
-      .split(',')
-      .map(_.drop(1).dropRight(1))
+        .slurpWhole
+        .split(',')
+        .map(_.drop(1).dropRight(1))
     }
     val anagrams = {
       words
-      .groupBy(_.sorted)
+        .groupBy(_.toSeq.sorted.unwrap)
       .values
       .toList
       .filter(_.length > 1)
@@ -30,10 +30,10 @@ object Euler98 {
     }
     val squareNumbers = {
       allSquares
-      .takeWhile(_ <= maxValue)
-      .map(_.toString)
-      .toList
-      .groupBy(_.sorted)
+        .takeWhile(_ <= maxValue)
+        .map(_.toString)
+        .toList
+        .groupBy(_.toSeq.sorted.unwrap)
       .values
       .toList
       .filter(_.length > 1)

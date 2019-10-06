@@ -1,8 +1,6 @@
 package hod.euler
 
-import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.util.control.Breaks._
 
 object Euler60 {
   def main(args: Array[String]): Unit = {
@@ -11,7 +9,7 @@ object Euler60 {
 
     def somePrimes = primes(primeCount).toList
 
-    def findNextValidPrimeToAdd(already: Seq[Int]) = {
+    def findNextValidPrimeToAdd(already: collection.Seq[Int]) = {
       somePrimes.find { candidate =>
         already.forall { old =>
           s"$candidate$old".toLong.isPrime &&

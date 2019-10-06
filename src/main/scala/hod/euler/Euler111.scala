@@ -37,7 +37,7 @@ object Euler111 {
     }
     val analyzed = mutable.HashMap.empty[Int, Primes]
     withTenDigits.foreach { prime =>
-      val occurences = prime.toString.map(_.asDigit).occurences
+      val occurences = prime.toString.map((c: Char) => c.asDigit).occurences
       occurences.foreach { case (digit, count) =>
         analyzed.get(digit) match {
           case Some(subPrimes) if subPrimes.highestCount == count =>

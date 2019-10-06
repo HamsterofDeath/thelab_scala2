@@ -1,7 +1,7 @@
 package hod.euler
 
-import scala.collection.{immutable, mutable}
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
+import scala.collection.parallel.CollectionConverters._
 
 object Euler88 {
 
@@ -77,9 +77,9 @@ object Euler88 {
 
   case class Key(parameters: Int*)
 
-  def findSolutions(target: Int, factors: IndexedSeq[Int]): Traversable[Map[Int, Int]] = {
+  def findSolutions(target: Int, factors: IndexedSeq[Int]): Foreach[Map[Int, Int]] = {
 
-    new Traversable[Map[Int, Int]] {
+    new Foreach[Map[Int, Int]] {
       override def foreach[U](f: Map[Int, Int] => U): Unit = {
         val workOn = mutable.HashMap.empty[Int, IntVar]
 

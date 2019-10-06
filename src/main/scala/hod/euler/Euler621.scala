@@ -1,7 +1,7 @@
 package hod.euler
 
 import java.text.DecimalFormat
-import scala.collection.{immutable, mutable}
+import scala.collection.parallel.CollectionConverters._
 
 object Euler621 {
 

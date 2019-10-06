@@ -1,7 +1,6 @@
 package hod.euler
 
 import scala.collection.mutable
-import scala.util.Random
 
 object Euler493 {
   val poolSize                    = 70

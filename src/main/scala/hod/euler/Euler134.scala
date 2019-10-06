@@ -1,8 +1,7 @@
 package hod.euler
 
-import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 
 object Euler134 {
   def main(args: Array[String]): Unit = {
@@ -11,7 +10,7 @@ object Euler134 {
         .drop(2)
         .stopAfter(_ > 1000000)
     }
-    implicit val ctx = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(4))
+    implicit val ctx = executionContextForThreads()
     def solutions = {
       samples
         .sliding(2, 1)
@@ -35,6 +34,7 @@ object Euler134 {
     def finalSolutions = solutions.map { e =>
       Await.result(e, Duration.Inf)
     }.sum
+
     measured {
       println(finalSolutions)
     }
