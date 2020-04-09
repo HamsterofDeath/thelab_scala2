@@ -1,8 +1,11 @@
 package hod.stuff.boardgames.chess
 
-import hod.stuff.boardgames.logic.{BoardState, Move, MutableBoard, OutcomeNotDetermined, WinnerDetermined}
+import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardState, GameContext, Move, MutableBoard, OutcomeNotDetermined, Rating,
+  WinnerDetermined}
 
 abstract case class Piece(value: Int) {
+  def pieceName = getClass.getSimpleName
+
   def targetsOn(field: FieldWrapper, currentPlayer: Player, pieceLocation: Location): Iterator[ChessMove]
 
 }
@@ -12,20 +15,38 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
   }
 
   def isValidAndFreeOrOccupiedBy(location: Location, owner: Player): Boolean = {
-    isFreeAndValid(location) && isOccupiedBy(location, owner)
+    isValid(location) && (isFree(location) || isOccupiedBy(location, owner))
   }
 
   private def pathUntil(pieceLocation: Location, xShift: Int, yShift: Int, canAttack: Player, infinite: Boolean): Iterator[Location] = {
     var cursor = pieceLocation
 
     def shifted = {
-      cursor = pieceLocation.moved(xShift, yShift)
+      cursor = cursor.moved(xShift, yShift)
       cursor
     }
 
-    val endless = Iterator.continually(shifted)
+    val endless = {
+      var firstContact = false
+      Iterator.continually(shifted)
+              .takeWhile { locationToCheck =>
+                if (isValid(locationToCheck) && !firstContact) {
+                  if (isFree(locationToCheck)) {
+                    true
+                  } else {
+                    val moveOn = isOccupiedBy(locationToCheck, canAttack)
+                    if (moveOn) {
+                      firstContact = true
+                    }
+                    moveOn
+                  }
+                } else {
+                  false
+                }
+              }
+    }
     if (infinite) {
-      Iterator.continually(shifted).takeWhile(isValidAndFreeOrOccupiedBy(_, canAttack))
+      endless
     } else {
       endless.take(1)
     }
@@ -38,17 +59,17 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
         pathUntil(pieceLocation, -1, 0, enemy, infiniteRange) ++
         pathUntil(pieceLocation, 1, 0, enemy, infiniteRange) ++
         pathUntil(pieceLocation, 0, -1, enemy, infiniteRange) ++
-        pathUntil(pieceLocation, 0, 11, enemy, infiniteRange)
+        pathUntil(pieceLocation, 0, 1, enemy, infiniteRange)
       } else {
         Iterator.empty
       }
     }
     val rot45           = {
       if (diagonal) {
-        pathUntil(pieceLocation, -1, 0, enemy, infiniteRange) ++
-        pathUntil(pieceLocation, 1, 0, enemy, infiniteRange) ++
-        pathUntil(pieceLocation, 0, -1, enemy, infiniteRange) ++
-        pathUntil(pieceLocation, 0, 11, enemy, infiniteRange)
+        pathUntil(pieceLocation, -1, -1, enemy, infiniteRange) ++
+        pathUntil(pieceLocation, 1, -1, enemy, infiniteRange) ++
+        pathUntil(pieceLocation, -1, 1, enemy, infiniteRange) ++
+        pathUntil(pieceLocation, 1, 1, enemy, infiniteRange)
       } else {
         Iterator.empty
       }
@@ -118,7 +139,7 @@ object Pawn extends Piece(1) {
       val attackLeft = {
         val target = pieceLocation.moved(-1, 1 * directionFactor)
         if (isAttackable(target)) {
-          Iterator.single(ChessMove(pieceLocation, target, None))
+          Iterator.single(field.locationToMove(pieceLocation, target))
         } else {
           Iterator.empty
         }
@@ -127,7 +148,7 @@ object Pawn extends Piece(1) {
       val attackRight = {
         val target = pieceLocation.moved(1, 1 * directionFactor)
         if (isAttackable(target)) {
-          Iterator.single(ChessMove(pieceLocation, target, None))
+          Iterator.single(field.locationToMove(pieceLocation, target))
         } else {
           Iterator.empty
         }
@@ -207,7 +228,7 @@ object Black extends Player(2) {
 }
 
 case class Location(x: Int, y: Int) {
-  def moved(xShift: Int, yShift: Int) = {
+  def moved(xShift: Int, yShift: Int): Location = {
     Location(x + xShift, y + yShift)
   }
 
@@ -215,13 +236,37 @@ case class Location(x: Int, y: Int) {
 case class ChessMove(from: Location, to: Location, taken: Option[PieceOfPlayer]) extends Move
 case class PieceOfPlayer(piece: Piece, owner: Player) {
   def allMovesOnBoard(field: FieldWrapper, pieceLocation: Location): Iterator[ChessMove] = {
-    piece.targetsOn(field, owner, pieceLocation)
+    piece.targetsOn(field, owner, pieceLocation).iterator
   }
 }
 
 class ChessBoard extends MutableBoard[ChessMove] {
-  private var currentPlayer = White
-  private var winner        = Option.empty[Player]
+  def pieceAt(x: Int, y: Int) = field(x)(y)
+
+  private def allLocations = {
+    (0 to 7).iterator.flatMap { x =>
+      (0 to 7).map { y => Location(x, y) }
+    }
+  }
+
+  def activePiecesSum(viewpoint: Player): Int = {
+    allLocations.map { where =>
+      field(where.x)(where.y) match {
+        case Some(pieceAndOwner) =>
+          if (pieceAndOwner.owner == viewpoint) {
+            pieceAndOwner.piece.value
+          } else {
+            -pieceAndOwner.piece.value
+          }
+        case None => 0
+      }
+    }.sum
+  }
+
+  private var currentPlayer: Player = White
+  private var winner                = Option.empty[Player]
+
+  def player = currentPlayer
 
   private val field = {
     val wip = Array.fill[Option[PieceOfPlayer]](8, 8)(None)
@@ -234,13 +279,13 @@ class ChessBoard extends MutableBoard[ChessMove] {
     wip(6)(0) = Some(PieceOfPlayer(Horse, White))
     wip(7)(0) = Some(PieceOfPlayer(Tower, White))
     wip(0)(1) = Some(PieceOfPlayer(Pawn, White))
-    wip(1)(1) = Some(PieceOfPlayer(Horse, White))
-    wip(2)(1) = Some(PieceOfPlayer(Bishop, White))
-    wip(3)(1) = Some(PieceOfPlayer(King, White))
-    wip(4)(1) = Some(PieceOfPlayer(Queen, White))
-    wip(5)(1) = Some(PieceOfPlayer(Bishop, White))
-    wip(6)(1) = Some(PieceOfPlayer(Horse, White))
-    wip(7)(1) = Some(PieceOfPlayer(Tower, White))
+    wip(1)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(2)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(3)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(4)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(5)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(6)(1) = Some(PieceOfPlayer(Pawn, White))
+    wip(7)(1) = Some(PieceOfPlayer(Pawn, White))
 
     wip(0)(6) = Some(PieceOfPlayer(Pawn, Black))
     wip(1)(6) = Some(PieceOfPlayer(Pawn, Black))
@@ -263,11 +308,22 @@ class ChessBoard extends MutableBoard[ChessMove] {
 
   private val wrappedField = new FieldWrapper(field)
 
+  override def applied(move: ChessMove): Unit = {
+    assert(field(move.to.x)(move.to.y) == move.taken)
+    field(move.to.x)(move.to.y) = field(move.from.x)(move.from.y)
+    field(move.from.x)(move.from.y) = None
+    flipPlayer()
+  }
+
   override def undo(move: ChessMove): Unit = {
     field(move.from.x)(move.from.y) = field(move.to.x)(move.to.y)
     field(move.to.x)(move.to.y) = move.taken
+    flipPlayer()
   }
 
+  private def flipPlayer(): Unit = {
+    currentPlayer = currentPlayer.otherPlayer
+  }
   override def validMoves: Iterator[ChessMove] = {
     val myMoves = 0 to 7 flatMap { x =>
       0 to 7 flatMap { y =>
@@ -279,10 +335,6 @@ class ChessBoard extends MutableBoard[ChessMove] {
     myMoves.iterator
   }
 
-  override def applied(move: ChessMove): Unit = {
-    field(move.to.x)(move.to.y) = field(move.from.x)(move.from.y)
-    field(move.from.x)(move.from.y) = None
-  }
 
   override def boardState: BoardState = {
     if (winner.isDefined) {
@@ -293,3 +345,32 @@ class ChessBoard extends MutableBoard[ChessMove] {
   }
 }
 
+object ChessRating extends Rating[ChessMove, ChessBoard] {
+  override def rate(situation: ChessBoard): Int = {
+    situation.activePiecesSum(situation.player)
+  }
+}
+
+object ChessPrinter extends BoardPrinter[ChessBoard] {
+  override def toString(board: ChessBoard): String = {
+    (0 to 7).map { y =>
+      (0 to 7).map { x =>
+        board.pieceAt(x, y) match {
+          case Some(pieceAndOwner) =>
+            val name = pieceAndOwner.piece.pieceName
+            pieceAndOwner.owner match {
+              case White => name.toUpperCase.padTo(8, ' ')
+              case Black => name.toLowerCase.padTo(8, ' ')
+            }
+          case None => "        "
+        }
+      }.mkString
+    }.mkString("\n")
+  }
+}
+
+object ChessBoard {
+  def main(args: Array[String]): Unit = {
+    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 1, ChessRating, ChessPrinter))
+  }
+}

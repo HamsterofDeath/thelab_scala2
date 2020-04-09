@@ -43,19 +43,16 @@ class GameEndsWithWinner extends Exception
 object AutoPlay {
   def playTwoPlayerGame[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): Unit = {
     while (context.board.gameNotFinished) {
+      println(s"Board:\n${context.printForConsole}")
       val best = MoveTraverse.searchBestMove(context)
       println(s"Move: $best")
       context.board.applyToMe(best)
-      println(s"Board:\n${context.printForConsole}")
     }
   }
 }
 
 object MoveTraverse {
-  private case class MoveAndRating[M <: Move](move: M, rating: Int) {
-    def flipViewPoint = copy(rating = -rating)
-
-  }
+  private case class MoveAndRating[M <: Move](move: M, rating: Int)
 
   def searchBestMove[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): M = {
     val rating = context.rating
