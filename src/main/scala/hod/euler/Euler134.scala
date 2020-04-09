@@ -10,7 +10,7 @@ object Euler134 {
         .drop(2)
         .stopAfter(_ > 1000000)
     }
-    implicit val ctx = executionContextForThreads()
+    implicit val ctx = executionContextForThreads(1)
     def solutions = {
       samples
         .sliding(2, 1)

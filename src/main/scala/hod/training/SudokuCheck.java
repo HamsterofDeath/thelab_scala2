@@ -1,6 +1,7 @@
 package hod.training;
 
 public class SudokuCheck {
+
     public static void main(String[] args) {
         int[] sudoku3x3 = new int[]{
                 4, 2, 6, 5, 7, 1, 3, 9, 8,
