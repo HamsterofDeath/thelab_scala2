@@ -320,17 +320,28 @@ class ChessBoard extends MutableBoard[ChessMove] {
 
   private val wrappedField = new FieldWrapper(field)
 
+  def checkWinner(): Unit = {
+    val kings = allLocations.flatMap(e => pieceAt(e.x, e.y).filter(_.piece == King)).toList
+    kings.size match {
+      case 2 => winner = None
+      case 1 => winner = Some(kings.head.owner)
+      case 0 => throw new IllegalStateException()
+    }
+  }
+
   override def applied(move: ChessMove): Unit = {
     assert(field(move.to.x)(move.to.y) == move.taken)
     field(move.to.x)(move.to.y) = field(move.from.x)(move.from.y)
     field(move.from.x)(move.from.y) = None
     flipPlayer()
+    checkWinner()
   }
 
   override def undo(move: ChessMove): Unit = {
     field(move.from.x)(move.from.y) = field(move.to.x)(move.to.y)
     field(move.to.x)(move.to.y) = move.taken
     flipPlayer()
+    checkWinner()
   }
 
   private def flipPlayer(): Unit = {
@@ -360,10 +371,11 @@ class ChessBoard extends MutableBoard[ChessMove] {
 
 object ChessRating extends Rating[ChessMove, ChessBoard] {
   override def rate(situation: ChessBoard): Int = {
-    situation.activePiecesSum(White) * 10 -
-    situation.activePiecesSum(Black) * 10 +
+    situation.activePiecesSum(White) * 100 -
+    situation.activePiecesSum(Black) * 100 +
     situation.attackableFieldsSum(White) -
-    situation.attackableFieldsSum(Black)
+    situation.attackableFieldsSum(Black) +
+    0
   }
 }
 
@@ -394,6 +406,6 @@ object ChessPrinter extends BoardPrinter[ChessMove, ChessBoard] {
 
 object ChessBoard {
   def main(args: Array[String]): Unit = {
-    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 3, ChessRating, ChessPrinter))
+    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 31, ChessRating, ChessPrinter))
   }
 }

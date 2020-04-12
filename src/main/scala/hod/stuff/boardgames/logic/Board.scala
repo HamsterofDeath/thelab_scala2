@@ -1,5 +1,7 @@
 package hod.stuff.boardgames.logic
 
+import scala.collection.mutable
+
 trait Board[M <: Move] {
   def validMoves: Iterator[M]
   def applied(move: M)
@@ -44,14 +46,30 @@ class GameEndsWithWinner extends Exception
 
 object AutoPlay {
   def playTwoPlayerGame[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): Unit = {
+    val moveHistory = mutable.ArrayBuffer.empty[M]
     println(s"Board:\n${context.printForConsole}")
-    while (context.board.gameNotFinished) {
+    var looping = false
+    while (!looping && context.board.gameNotFinished) {
       val best = MoveTraverse.searchBestMove(context)
+      moveHistory += best
       println(s" -> Move: ${context.printer.printMove(best, context.board)}")
       context.board.applyToMe(best)
       println(s"Board:\n${context.printForConsole}\n")
+
+      if (moveHistory.size > 10) {
+        2.to(10, 2).foreach { moves =>
+          val last = moveHistory.slice(moveHistory.size - moves, moveHistory.size)
+          val prev = moveHistory.slice(moveHistory.size - moves - moves, moveHistory.size - moves)
+          if (last == prev) {
+            looping = true
+          }
+        }
+      }
     }
     println("game over")
+    if (looping) {
+      println("is looping")
+    }
   }
 
 }
