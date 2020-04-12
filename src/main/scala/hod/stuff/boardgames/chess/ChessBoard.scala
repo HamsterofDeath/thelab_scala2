@@ -222,12 +222,16 @@ sealed abstract case class Player(num: Int) {
 }
 object White extends Player(1) {
   override def otherPlayer: Player = Black
+  override def toString = "White"
 }
 object Black extends Player(2) {
   override def otherPlayer: Player = White
+  override def toString = "Black"
 }
 
 case class Location(x: Int, y: Int) {
+  def print = s"$x/$y"
+
   def moved(xShift: Int, yShift: Int): Location = {
     Location(x + xShift, y + yShift)
   }
@@ -235,12 +239,17 @@ case class Location(x: Int, y: Int) {
 }
 case class ChessMove(from: Location, to: Location, taken: Option[PieceOfPlayer]) extends Move
 case class PieceOfPlayer(piece: Piece, owner: Player) {
+  def print = s"${piece.pieceName} of $owner"
+
   def allMovesOnBoard(field: FieldWrapper, pieceLocation: Location): Iterator[ChessMove] = {
     piece.targetsOn(field, owner, pieceLocation).iterator
   }
 }
 
 class ChessBoard extends MutableBoard[ChessMove] {
+  def attackableFieldsSum(player: Player) = {
+    validMovesOf(player).size
+  }
 
   def isTurnOfMaximizingPlayer = currentPlayer == White
 
@@ -259,7 +268,7 @@ class ChessBoard extends MutableBoard[ChessMove] {
           if (pieceAndOwner.owner == viewpoint) {
             pieceAndOwner.piece.value
           } else {
-            -pieceAndOwner.piece.value
+            0
           }
         case None => 0
       }
@@ -327,17 +336,18 @@ class ChessBoard extends MutableBoard[ChessMove] {
   private def flipPlayer(): Unit = {
     currentPlayer = currentPlayer.otherPlayer
   }
-  override def validMoves: Iterator[ChessMove] = {
-    val myMoves = 0 to 7 flatMap { x =>
-      0 to 7 flatMap { y =>
-        field(x)(y).filter(_.owner == currentPlayer).iterator.flatMap { piece =>
-          piece.allMovesOnBoard(wrappedField, Location(x, y))
-        }
+
+  private def validMovesOf(player: Player) = {
+    allLocations.flatMap { loc =>
+      field(loc.x)(loc.y).filter(_.owner == player).iterator.flatMap { piece =>
+        piece.allMovesOnBoard(wrappedField, loc)
       }
     }
-    myMoves.iterator
   }
 
+  override def validMoves: Iterator[ChessMove] = {
+    validMovesOf(currentPlayer).toArray.iterator
+  }
 
   override def boardState: BoardState = {
     if (winner.isDefined) {
@@ -350,12 +360,22 @@ class ChessBoard extends MutableBoard[ChessMove] {
 
 object ChessRating extends Rating[ChessMove, ChessBoard] {
   override def rate(situation: ChessBoard): Int = {
-    situation.activePiecesSum(situation.player)
+    situation.activePiecesSum(White) * 10 -
+    situation.activePiecesSum(Black) * 10 +
+    situation.attackableFieldsSum(White) -
+    situation.attackableFieldsSum(Black)
   }
 }
 
-object ChessPrinter extends BoardPrinter[ChessBoard] {
-  override def toString(board: ChessBoard): String = {
+object ChessPrinter extends BoardPrinter[ChessMove, ChessBoard] {
+
+  override def printMove(move: ChessMove, board: ChessBoard): String = {
+    val piece = board.pieceAt(move.from.x, move.from.y).get
+    val eaten = board.pieceAt(move.to.x, move.to.y)
+    s"${piece.piece.pieceName} of ${piece.owner} from ${move.from.print} to ${move.to.print}, taking ${eaten.map(_.print).getOrElse("nothing")}"
+  }
+
+  override def printBoard(board: ChessBoard): String = {
     (0 to 7).map { y =>
       (0 to 7).map { x =>
         board.pieceAt(x, y) match {
@@ -374,6 +394,6 @@ object ChessPrinter extends BoardPrinter[ChessBoard] {
 
 object ChessBoard {
   def main(args: Array[String]): Unit = {
-    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 1, ChessRating, ChessPrinter))
+    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 3, ChessRating, ChessPrinter))
   }
 }

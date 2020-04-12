@@ -28,13 +28,14 @@ trait Rating[M <: Move, B <: Board[M]] {
   def rate(situation: B): Int
 }
 
-trait BoardPrinter[B <: Board[_]] {
-  def toString(board: B): String
+trait BoardPrinter[M <: Move, B <: Board[M]] {
+  def printBoard(board: B): String
+  def printMove(move: M, board: B): String = move.toString
 }
 
-class GameContext[M <: Move, B <: MutableBoard[M]](val board: B, val searchDepth: Int, val rating: Rating[M, B], val printer: BoardPrinter[B]) {
+class GameContext[M <: Move, B <: MutableBoard[M]](val board: B, val searchDepth: Int, val rating: Rating[M, B], val printer: BoardPrinter[M, B]) {
   def printForConsole = {
-    printer.toString(board)
+    printer.printBoard(board)
   }
 }
 
@@ -46,19 +47,33 @@ object AutoPlay {
     println(s"Board:\n${context.printForConsole}")
     while (context.board.gameNotFinished) {
       val best = MoveTraverse.searchBestMove(context)
-      println(s"Move: $best")
+      println(s" -> Move: ${context.printer.printMove(best, context.board)}")
       context.board.applyToMe(best)
-      println(s"Board:\n${context.printForConsole}")
+      println(s"Board:\n${context.printForConsole}\n")
     }
+    println("game over")
   }
-  println("game over")
+
 }
 
 object MoveTraverse {
-  private val debug = true
+  private val debug = false
   private case class MoveAndRating[M <: Move](move: M, rating: Int)
 
   def searchBestMove[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): M = {
+    def takeUntil[T](it: IterableOnce[T])(continueIf: T => Boolean) = {
+      var oneMoreAdded = false
+      it.iterator.takeWhile { e =>
+        val defaultCheck = continueIf(e)
+        val addOne       = !oneMoreAdded
+        if (!defaultCheck) {
+          oneMoreAdded = true
+        }
+
+        defaultCheck || addOne
+      }
+    }
+
     val rating = context.rating
 
     val situation = context.board
@@ -77,23 +92,28 @@ object MoveTraverse {
               var myAlpha = alpha
               var myBeta  = beta
 
-              val ratings = situation.validMoves.toList.map { move =>
+              val ratings         = situation.validMoves.map { move =>
                 valueOfMove(move, remainingDepth - 1, !maximizingPlayersTurn, myAlpha, myBeta)
               }
               // this is flipped because the move to be tested has already been made
-              if (maximizingPlayersTurn) {
-                ratings.takeWhile { rating =>
-                  myBeta = myBeta min rating
-                  alpha < myBeta
-                  true
-                }.min
-              } else {
-                ratings.takeWhile { rating =>
-                  myAlpha = myAlpha max rating
-                  myAlpha < beta
-                  true
-                }.max
+              val valueOfBestMove = {
+                if (maximizingPlayersTurn) {
+                  val pruned = takeUntil(ratings) { rating =>
+                    myBeta = myBeta min rating
+                    val take = alpha < myBeta
+                    take
+                  }
+                  pruned.min
+                } else {
+                  val pruned = takeUntil(ratings) { rating =>
+                    myAlpha = myAlpha max rating
+                    val take = myAlpha < beta
+                    take
+                  }
+                  pruned.max
+                }
               }
+              valueOfBestMove
             case WinnerDetermined | MovesExhausted =>
               // as seen from the other player
               ratingOfCurrent
@@ -106,13 +126,23 @@ object MoveTraverse {
 
     val moves = context.board.validMoves.toList
 
+    var rootAlpha          = Int.MinValue
+    var rootBeta           = Int.MaxValue
+    val isMaximizingPlayer = situation.isTurnOfMaximizingPlayer
+
     def rateMove(move: M) = {
-      val rating = valueOfMove(move, context.searchDepth, situation.isTurnOfMaximizingPlayer, Int.MinValue, Int.MaxValue)
-      if (debug) println(s"Candidate $move = $rating, player one: ${situation.isTurnOfMaximizingPlayer}")
+      val rating = valueOfMove(move, context.searchDepth, isMaximizingPlayer, rootAlpha, rootBeta)
+      if (isMaximizingPlayer) {
+        rootAlpha = rootAlpha max rating
+      } else {
+        rootBeta = rootBeta min rating
+      }
+
+      if (debug) println(s"Candidate $move = $rating, player one: $isMaximizingPlayer, alpha: $rootAlpha, beta: $rootBeta")
       rating
     }
 
-    if (situation.isTurnOfMaximizingPlayer) {
+    if (isMaximizingPlayer) {
       moves.maxBy(rateMove)
     } else {
       moves.minBy(rateMove)

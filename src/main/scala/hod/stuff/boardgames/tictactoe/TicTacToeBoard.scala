@@ -101,8 +101,8 @@ object TicTacToeRating extends Rating[PlaceMarker, TicTacToeBoard] {
   }
 }
 
-object TicTacToePrinter extends BoardPrinter[TicTacToeBoard] {
-  override def toString(board: TicTacToeBoard): String = {
+object TicTacToePrinter extends BoardPrinter[PlaceMarker, TicTacToeBoard] {
+  override def printBoard(board: TicTacToeBoard): String = {
     (0 to 2).map { y =>
       (0 to 2).map { x =>
         board.playerOn(x, y) match {
