@@ -406,6 +406,6 @@ object ChessPrinter extends BoardPrinter[ChessMove, ChessBoard] {
 
 object ChessBoard {
   def main(args: Array[String]): Unit = {
-    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 31, ChessRating, ChessPrinter))
+    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 3, ChessRating, ChessPrinter))
   }
 }
