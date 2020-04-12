@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="hamsterofdeath.thelab,thelab_4127">
+    <profile name="sbt 1" modules="thelab_4127">
       <option name="higherKinds" value="true" />
     </profile>
+    <profile name="sbt 2" modules="hamsterofdeath.thelab" />
   </component>
 </project>

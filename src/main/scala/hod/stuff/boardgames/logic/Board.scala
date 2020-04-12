@@ -5,6 +5,7 @@ trait Board[M <: Move] {
   def applied(move: M)
   def boardState: BoardState
   def gameNotFinished = boardState == OutcomeNotDetermined
+  def isTurnOfMaximizingPlayer: Boolean
 }
 
 sealed trait BoardState
@@ -42,16 +43,19 @@ class GameEndsWithWinner extends Exception
 
 object AutoPlay {
   def playTwoPlayerGame[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): Unit = {
+    println(s"Board:\n${context.printForConsole}")
     while (context.board.gameNotFinished) {
-      println(s"Board:\n${context.printForConsole}")
       val best = MoveTraverse.searchBestMove(context)
       println(s"Move: $best")
       context.board.applyToMe(best)
+      println(s"Board:\n${context.printForConsole}")
     }
   }
+  println("game over")
 }
 
 object MoveTraverse {
+  private val debug = true
   private case class MoveAndRating[M <: Move](move: M, rating: Int)
 
   def searchBestMove[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): M = {
@@ -59,32 +63,59 @@ object MoveTraverse {
 
     val situation = context.board
 
-    def valueOfMove(move: M, maxDepth: Int, myTurn: Boolean): Int = {
-      situation.applyToMe(move)
-      val moveRating         = maxDepth match {
+    def valueOfMove(move: M, remainingDepth: Int, maximizingPlayersTurn: Boolean, alpha: Int, beta: Int): Int = {
+
+      situation.applyToMe(move) // after this, it's the other player's turn
+      def ratingOfCurrent = rating.rate(situation)
+
+      val moveRating = remainingDepth match {
         case 0 =>
-          // as seen from the other player
-          -rating.rate(situation)
+          ratingOfCurrent
         case _ =>
           situation.boardState match {
             case OutcomeNotDetermined =>
-              val ratings = situation.validMoves.map { move =>
-                valueOfMove(move, maxDepth - 1, !myTurn)
+              var myAlpha = alpha
+              var myBeta  = beta
+
+              val ratings = situation.validMoves.toList.map { move =>
+                valueOfMove(move, remainingDepth - 1, !maximizingPlayersTurn, myAlpha, myBeta)
               }
-              if (myTurn) ratings.min else ratings.max
+              // this is flipped because the move to be tested has already been made
+              if (maximizingPlayersTurn) {
+                ratings.takeWhile { rating =>
+                  myBeta = myBeta min rating
+                  alpha < myBeta
+                  true
+                }.min
+              } else {
+                ratings.takeWhile { rating =>
+                  myAlpha = myAlpha max rating
+                  myAlpha < beta
+                  true
+                }.max
+              }
             case WinnerDetermined | MovesExhausted =>
               // as seen from the other player
-              -rating.rate(situation)
+              ratingOfCurrent
           }
 
       }
-      val ratingForPlayerOne = if (myTurn) moveRating else -moveRating
       situation.undo(move)
-      ratingForPlayerOne
+      moveRating
     }
 
-    context.board.validMoves.maxBy { move =>
-      valueOfMove(move, context.searchDepth, true)
+    val moves = context.board.validMoves.toList
+
+    def rateMove(move: M) = {
+      val rating = valueOfMove(move, context.searchDepth, situation.isTurnOfMaximizingPlayer, Int.MinValue, Int.MaxValue)
+      if (debug) println(s"Candidate $move = $rating, player one: ${situation.isTurnOfMaximizingPlayer}")
+      rating
+    }
+
+    if (situation.isTurnOfMaximizingPlayer) {
+      moves.maxBy(rateMove)
+    } else {
+      moves.minBy(rateMove)
     }
   }
 

@@ -241,6 +241,9 @@ case class PieceOfPlayer(piece: Piece, owner: Player) {
 }
 
 class ChessBoard extends MutableBoard[ChessMove] {
+
+  def isTurnOfMaximizingPlayer = currentPlayer == White
+
   def pieceAt(x: Int, y: Int) = field(x)(y)
 
   private def allLocations = {

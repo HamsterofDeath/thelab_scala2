@@ -5,6 +5,8 @@ import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardState, GameConte
 
 case class PlaceMarker(x: Int, y: Int, player: Int) extends Move
 class TicTacToeBoard extends MutableBoard[PlaceMarker] {
+  def isTurnOfMaximizingPlayer = currentTurnPlayer == 1
+
   def playerOn(x: Int, y: Int) = data(x)(y)
 
   def otherPlayer: Int = currentTurnPlayer match {
@@ -12,10 +14,10 @@ class TicTacToeBoard extends MutableBoard[PlaceMarker] {
     case 2 => 1
   }
 
-  def rateSelf(): Int = {
+  def rateSelfAsSeenFromPlayerOne(): Int = {
 
-    val victory: Boolean = hasPlayerWon(currentTurnPlayer)
-    val loss   : Boolean = hasPlayerWon(otherPlayer)
+    val victory: Boolean = hasPlayerWon(1)
+    val loss   : Boolean = hasPlayerWon(2)
 
     if (victory) 1 else if (loss) -1 else 0
   }
@@ -95,7 +97,7 @@ class TicTacToeBoard extends MutableBoard[PlaceMarker] {
 
 object TicTacToeRating extends Rating[PlaceMarker, TicTacToeBoard] {
   override def rate(situation: TicTacToeBoard): Int = {
-    situation.rateSelf()
+    situation.rateSelfAsSeenFromPlayerOne()
   }
 }
 
