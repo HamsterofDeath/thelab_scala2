@@ -373,8 +373,8 @@ object ChessRating extends Rating[ChessMove, ChessBoard] {
   override def rate(situation: ChessBoard): Int = {
     situation.activePiecesSum(White) * 100 -
     situation.activePiecesSum(Black) * 100 +
-    situation.attackableFieldsSum(White) -
-    situation.attackableFieldsSum(Black) +
+    //situation.attackableFieldsSum(White) -
+    //situation.attackableFieldsSum(Black) +
     0
   }
 }
@@ -406,6 +406,14 @@ object ChessPrinter extends BoardPrinter[ChessMove, ChessBoard] {
 
 object ChessBoard {
   def main(args: Array[String]): Unit = {
-    AutoPlay.playTwoPlayerGame(new GameContext[ChessMove, ChessBoard](new ChessBoard, 3, ChessRating, ChessPrinter))
+    val ctx = new GameContext[ChessMove, ChessBoard](
+      new ChessBoard,
+      4,
+      ChessRating,
+      ChessPrinter,
+      false,
+      alphaBetaPruning = true
+    )
+    AutoPlay.playTwoPlayerGame(ctx)
   }
 }

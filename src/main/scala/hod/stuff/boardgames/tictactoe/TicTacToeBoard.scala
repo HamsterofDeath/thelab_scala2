@@ -118,7 +118,7 @@ object TicTacToePrinter extends BoardPrinter[PlaceMarker, TicTacToeBoard] {
 object TicTacToeBoard {
   def main(args: Array[String]): Unit = {
     val board = new TicTacToeBoard
-    val ctx   = new GameContext[PlaceMarker, TicTacToeBoard](board, 10, TicTacToeRating, TicTacToePrinter)
+    val ctx   = new GameContext[PlaceMarker, TicTacToeBoard](board, 10, TicTacToeRating, TicTacToePrinter, true)
     AutoPlay.playTwoPlayerGame(ctx)
   }
 }

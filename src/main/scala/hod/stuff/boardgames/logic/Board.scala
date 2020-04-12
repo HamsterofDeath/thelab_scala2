@@ -1,6 +1,7 @@
 package hod.stuff.boardgames.logic
 
 import scala.collection.mutable
+import scala.util.Random
 
 trait Board[M <: Move] {
   def validMoves: Iterator[M]
@@ -35,7 +36,14 @@ trait BoardPrinter[M <: Move, B <: Board[M]] {
   def printMove(move: M, board: B): String = move.toString
 }
 
-class GameContext[M <: Move, B <: MutableBoard[M]](val board: B, val searchDepth: Int, val rating: Rating[M, B], val printer: BoardPrinter[M, B]) {
+class GameContext[M <: Move, B <: MutableBoard[M]](
+                                                    val board: B,
+                                                    val searchDepth: Int,
+                                                    val rating: Rating[M, B],
+                                                    val printer: BoardPrinter[M, B],
+                                                    val stableMoveChoice: Boolean = true,
+                                                    val alphaBetaPruning: Boolean = true
+                                                  ) {
   def printForConsole = {
     printer.printBoard(board)
   }
@@ -75,10 +83,13 @@ object AutoPlay {
 }
 
 object MoveTraverse {
-  private val debug = false
+  private val debug = true
   private case class MoveAndRating[M <: Move](move: M, rating: Int)
 
   def searchBestMove[M <: Move, B <: MutableBoard[M]](context: GameContext[M, B]): M = {
+    var nodes = 0
+    var leafs = 0
+
     def takeUntil[T](it: IterableOnce[T])(continueIf: T => Boolean) = {
       var oneMoreAdded = false
       it.iterator.takeWhile { e =>
@@ -93,13 +104,16 @@ object MoveTraverse {
     }
 
     val rating = context.rating
-
     val situation = context.board
 
     def valueOfMove(move: M, remainingDepth: Int, maximizingPlayersTurn: Boolean, alpha: Int, beta: Int): Int = {
+      nodes += 1
 
       situation.applyToMe(move) // after this, it's the other player's turn
-      def ratingOfCurrent = rating.rate(situation)
+      def ratingOfCurrent = {
+        leafs += 1
+        rating.rate(situation)
+      }
 
       val moveRating = remainingDepth match {
         case 0 =>
@@ -117,16 +131,24 @@ object MoveTraverse {
               val valueOfBestMove = {
                 if (maximizingPlayersTurn) {
                   val pruned = takeUntil(ratings) { rating =>
-                    myBeta = myBeta min rating
-                    val take = alpha < myBeta
-                    take
+                    if (context.alphaBetaPruning) {
+                      myBeta = myBeta min rating
+                      val take = alpha < myBeta
+                      take
+                    } else {
+                      true
+                    }
                   }
                   pruned.min
                 } else {
                   val pruned = takeUntil(ratings) { rating =>
-                    myAlpha = myAlpha max rating
-                    val take = myAlpha < beta
-                    take
+                    if (context.alphaBetaPruning) {
+                      myAlpha = myAlpha max rating
+                      val take = myAlpha < beta
+                      take
+                    } else {
+                      true
+                    }
                   }
                   pruned.max
                 }
@@ -142,8 +164,6 @@ object MoveTraverse {
       moveRating
     }
 
-    val moves = context.board.validMoves.toList
-
     var rootAlpha          = Int.MinValue
     var rootBeta           = Int.MaxValue
     val isMaximizingPlayer = situation.isTurnOfMaximizingPlayer
@@ -156,15 +176,36 @@ object MoveTraverse {
         rootBeta = rootBeta min rating
       }
 
-      if (debug) println(s"Candidate $move = $rating, player one: $isMaximizingPlayer, alpha: $rootAlpha, beta: $rootBeta")
+      if (debug) {
+        println(s"Candidate $move = $rating, player one: $isMaximizingPlayer")
+      }
       rating
     }
 
-    if (isMaximizingPlayer) {
-      moves.maxBy(rateMove)
-    } else {
-      moves.minBy(rateMove)
+    val moves = context.board.validMoves.toList.map { move => move -> rateMove(move) }
+
+    val bestRating = {
+      val justRatings = moves.iterator.map(_._2)
+      if (isMaximizingPlayer) {
+        justRatings.max
+      } else {
+        justRatings.min
+      }
     }
+
+    val randomMove = {
+      val candidates = moves.filter(_._2 == bestRating).map(_._1)
+      if (context.stableMoveChoice) {
+        candidates.head
+      } else {
+        candidates(new Random().nextInt(candidates.size))
+      }
+    }
+    if (debug) {
+      println(s"Leafs/Nodes: $leafs / $nodes")
+    }
+
+    randomMove
   }
 
 }
