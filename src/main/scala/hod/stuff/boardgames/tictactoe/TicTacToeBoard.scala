@@ -1,7 +1,7 @@
 package hod.stuff.boardgames.tictactoe
 
-import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardState, GameContext, Move, MovesExhausted, MutableBoard, OutcomeNotDetermined,
-  Rating, WinnerDetermined}
+import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState, GameContext, Move, MovesExhausted, MutableBoard,
+  OutcomeNotDetermined, WinnerDetermined}
 
 case class PlaceMarker(x: Int, y: Int, player: Int) extends Move
 class TicTacToeBoard extends MutableBoard[PlaceMarker] {
@@ -95,7 +95,7 @@ class TicTacToeBoard extends MutableBoard[PlaceMarker] {
   }
 }
 
-object TicTacToeRating extends Rating[PlaceMarker, TicTacToeBoard] {
+object TicTacToeRating extends BoardRating[PlaceMarker, TicTacToeBoard] {
   override def rate(situation: TicTacToeBoard): Int = {
     situation.rateSelfAsSeenFromPlayerOne()
   }

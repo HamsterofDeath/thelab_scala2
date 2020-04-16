@@ -1,6 +1,6 @@
 package hod.stuff.boardgames.chess
 
-import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardState, GameContext, Move, MutableBoard, OutcomeNotDetermined, Rating,
+import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState, GameContext, Move, MutableBoard, OutcomeNotDetermined,
   WinnerDetermined}
 
 abstract case class Piece(value: Int) {
@@ -369,7 +369,7 @@ class ChessBoard extends MutableBoard[ChessMove] {
   }
 }
 
-object ChessRating extends Rating[ChessMove, ChessBoard] {
+object ChessRating extends BoardRating[ChessMove, ChessBoard] {
   override def rate(situation: ChessBoard): Int = {
     situation.activePiecesSum(White) * 100 -
     situation.activePiecesSum(Black) * 100 +

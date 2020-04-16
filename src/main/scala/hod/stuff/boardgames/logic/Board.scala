@@ -27,7 +27,7 @@ trait MutableBoard[M <: Move] extends Board[M] {
 
 trait Move
 
-trait Rating[M <: Move, B <: Board[M]] {
+trait BoardRating[M <: Move, B <: Board[M]] {
   def rate(situation: B): Int
 }
 
@@ -39,10 +39,11 @@ trait BoardPrinter[M <: Move, B <: Board[M]] {
 class GameContext[M <: Move, B <: MutableBoard[M]](
                                                     val board: B,
                                                     val searchDepth: Int,
-                                                    val rating: Rating[M, B],
+                                                    val rating: BoardRating[M, B],
                                                     val printer: BoardPrinter[M, B],
                                                     val stableMoveChoice: Boolean = true,
-                                                    val alphaBetaPruning: Boolean = true
+                                                    val alphaBetaPruning: Boolean = true,
+                                                    val abortOnLoop: Boolean = true
                                                   ) {
   def printForConsole = {
     printer.printBoard(board)
@@ -64,7 +65,7 @@ object AutoPlay {
       context.board.applyToMe(best)
       println(s"Board:\n${context.printForConsole}\n")
 
-      if (moveHistory.size > 10) {
+      if (context.abortOnLoop && moveHistory.size > 10) {
         2.to(10, 2).foreach { moves =>
           val last = moveHistory.slice(moveHistory.size - moves, moveHistory.size)
           val prev = moveHistory.slice(moveHistory.size - moves - moves, moveHistory.size - moves)
