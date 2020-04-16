@@ -409,6 +409,7 @@ object ChessBoard {
     val ctx = new GameContext[ChessMove, ChessBoard](
       new ChessBoard,
       4,
+      None,
       ChessRating,
       ChessPrinter,
       false,

@@ -1,6 +1,8 @@
 package hod.stuff.boardgames.connect4
 
-import hod.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState, GameContext, Move, MovesExhausted, MutableBoard,
+import scala.util.{Failure, Success, Try}
+
+import hod.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating, BoardState, GameContext, Move, MovesExhausted, MutableBoard,
   OutcomeNotDetermined, WinnerDetermined}
 
 sealed trait PlaceCoin extends Move {
@@ -61,6 +63,19 @@ case object Red7 extends RedPlayerMove {
 }
 
 class Connect4Board extends MutableBoard[PlaceCoin] {
+  def allFreeCoordinates = (0 until width).iterator.flatMap { col =>
+    (filledUpTo(col) until height).iterator.map { row =>
+      (col, row)
+    }
+  }
+
+  def nextPossibleMoveCoordinates = validMoves
+    .map(_.column)
+    .map { col => col -> filledUpTo(col) }
+    .filter(e => e._2 < height)
+
+  def isTopReached(col: Int) = filledUpTo(col) >= height
+
   def hasBluePlayerWon: Boolean = winner == blueSet
   def hasRedPlayerWon: Boolean = winner == redSet
 
@@ -97,45 +112,61 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     (check & bits) == check
   }
 
-  def isGameOver(bits: Long, x: Int, y: Int): Boolean = {
+  private def countInLine(bits: Long,
+                          x: Int,
+                          y: Int,
+                          xShift: Int,
+                          yShift: Int) = {
     def inBounds(x: Int, y: Int) = x >= 0 && y >= 0 && x < width && y < height
 
-    def countSet(xShift: Int, yShift: Int) = {
-      var found = 0
-      var myX   = x
-      var myY   = y
+    var found = 0
+    var myX   = x
+    var myY   = y
 
-      var wasLastFieldSet = false
-      do {
-        myX += xShift
-        myY += yShift
-        wasLastFieldSet = isSet(bits, myX, myY)
-        if (wasLastFieldSet) {
-          found += 1
-        }
+    var wasLastFieldSet = false
+    do {
+      myX += xShift
+      myY += yShift
+      wasLastFieldSet = inBounds(myX, myY) && isSet(bits, myX, myY)
+      if (wasLastFieldSet) {
+        found += 1
       }
-      while (wasLastFieldSet && inBounds(x, y))
-      found
     }
+    while (wasLastFieldSet)
+    found
+  }
 
-    def leftRight = 1 + countSet(-1, 0) + countSet(1, 0)
+  def countMaxOwnedInLine(blue: Boolean, x: Int, y: Int): Int = {
+    val bits = if (blue) bluePlayerBits else redPlayerBits
 
-    def upDown = 1 + countSet(0, -1) + countSet(0, 1)
+    def leftRight =
+      1 + countInLine(bits, x, y, -1, 0) + countInLine(bits, x, y, 1, 0)
 
-    def slash = 1 + countSet(-1, -1) + countSet(1, 1)
+    def upDown =
+      1 + countInLine(bits, x, y, 0, -1) + countInLine(bits, x, y, 0, 1)
 
-    def backSlash = 1 + countSet(-1, 1) + countSet(1, -1)
+    def slash =
+      1 + countInLine(bits, x, y, -1, -1) + countInLine(bits, x, y, 1, 1)
 
-    leftRight >= 4 ||
-    upDown >= 4 ||
-    slash >= 4 ||
-    backSlash >= 4
+    def backSlash =
+      1 + countInLine(bits, x, y, -1, 1) + countInLine(bits, x, y, 1, -1)
+
+    leftRight max upDown max slash max backSlash
+  }
+
+  private val requiredInLine = 4
+
+  private def isGameOver(blue: Boolean, x: Int, y: Int): Boolean = {
+    countMaxOwnedInLine(blue, x, y) >= requiredInLine
   }
 
   private def checkGameOver(firstPlayer: Boolean, x: Int, y: Int) = {
-    val bits = if (firstPlayer) bluePlayerBits else redPlayerBits
-    if (isGameOver(bits, x, y)) {
-      winner = if (firstPlayer) blueSet else redSet
+    if (isGameOver(firstPlayer, x, y)) {
+      if (firstPlayer) {
+        winner = blueSet
+      } else {
+        winner = redSet
+      }
     }
   }
 
@@ -208,43 +239,97 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
 }
 
 object Connect4Printer extends BoardPrinter[PlaceCoin, Connect4Board] {
+
+  override def printMove(move: PlaceCoin, board: Connect4Board): String = {
+    s"Player ${if (move.isBlue) "Blue" else "Red"} in column ${move.column + 1}"
+  }
   override def printBoard(board: Connect4Board): String = {
-    (0 to 6 map { row =>
-      (0 to 7 map { col =>
-        board.fieldState(col, 6 - row) match {
-          case Some(true) => "X"
-          case Some(false) => "O"
+    "1234567\n" +
+    (0 to 5 map { row =>
+      (0 to 6 map { col =>
+        board.fieldState(col, 5 - row) match {
+          case Some(true) => colored("X", Colors.ANSI_BLUE)
+          case Some(false) => colored("O", Colors.ANSI_RED)
           case None => " "
         }
 
       }).mkString
-    }).mkString("\n")
+    }).mkString("\n") + "\n1234567"
   }
 }
 
 object Connect4Rating extends BoardRating[PlaceCoin, Connect4Board] {
+  private val smart = true
+
   override def rate(situation: Connect4Board): Int = {
-    if (situation.hasBluePlayerWon) 1
-    else if (situation.hasRedPlayerWon) -1
-    else 0
+    if (situation.hasBluePlayerWon) 100
+    else if (situation.hasRedPlayerWon) -100
+    else {
+      if (smart) {
+        if (situation.isTurnOfMaximizingPlayer) {
+          situation.nextPossibleMoveCoordinates.map { case (x, y) =>
+            situation.countMaxOwnedInLine(true, x, y)
+          }.sum
+        } else {
+          situation.nextPossibleMoveCoordinates.map { case (x, y) =>
+            situation.countMaxOwnedInLine(false, x, y)
+          }.sum * -1
+        }
+      } else {
+        0
+      }
+    }
   }
 }
 
 object Connect4Board {
   def main(args: Array[String]): Unit = {
     val board = new Connect4Board
-    board.applied(Blue1)
-    board.undo(Blue1)
-    AutoPlay.playTwoPlayerGame(
-      new GameContext[PlaceCoin, Connect4Board](
-        board,
-        4,
-        Connect4Rating,
-        Connect4Printer,
-        true,
-        false,
-        false
-      )
+    val ctx   = new GameContext[PlaceCoin, Connect4Board](
+      board,
+      20,
+      maxLeafEvals = Some(5000000),
+      Connect4Rating,
+      Connect4Printer,
+      true,
+      true,
+      false
+    )
+
+    def askInput(context: GameContext[PlaceCoin, Connect4Board]) = {
+      var success = Option.empty[PlaceCoin]
+      while (success.isEmpty) {
+        val move = scala.io.StdIn.readLine()
+        Try {
+          Some(move.toInt)
+            .filterNot(e => context.board.isTopReached(e - 1))
+            .get match {
+            case 1 => Blue1
+            case 2 => Blue2
+            case 3 => Blue3
+            case 4 => Blue4
+            case 5 => Blue5
+            case 6 => Blue6
+            case 7 => Blue7
+          }
+        } match {
+          case Failure(_) => println("No! Again!")
+          case Success(value) =>
+            success = Some(value)
+        }
+      }
+      success.get
+    }
+
+    AutoPlay.playTwoPlayerGame[PlaceCoin, Connect4Board](
+      ctx,
+      firstPlayer = (context: GameContext[PlaceCoin, Connect4Board]) => {
+        println("Your move?")
+        askInput(context)
+
+      },
+      //firstPlayer = BoardPlayer.autoPlayer,
+      secondPlayer = BoardPlayer.autoPlayer
     )
   }
 }
