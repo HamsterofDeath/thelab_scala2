@@ -269,23 +269,29 @@ object MoveTraverse {
       (randomMove, leafs, bestRating)
     }
 
+    var maxDepth = 0
     val bestMove = context.maxLeafEvals match {
       case Some(leafs) =>
         var fallback = Option.empty[(M, Int, Int)]
         (1 to context.maxSearchDepth).iterator
                                      .map { tryDepth =>
-                                       val trip@(_, evals, _) = evalWithMaxDepth(tryDepth)
+                                       val trip = evalWithMaxDepth(tryDepth)
                                        fallback = Some(trip)
+                                       maxDepth = tryDepth
                                        trip
                                      }
                                      .find(_._2 > leafs)
                                      .orElse(fallback)
                                      .get
-      case None => evalWithMaxDepth(context.maxSearchDepth)
+      case None =>
+        maxDepth = context.maxSearchDepth
+        evalWithMaxDepth(context.maxSearchDepth)
     }
 
     if (debug) {
-      println(s"Best move is ${context.printer.printMove(bestMove._1, context.board)} with a rating of ${bestMove._3} after ${bestMove._2} checks")
+      println(s"Best move is ${context.printer.printMove(bestMove._1, context.board)} with a rating of ${bestMove._3} after ${
+        bestMove._2
+      } checks at depth $maxDepth")
     }
     bestMove._1
   }

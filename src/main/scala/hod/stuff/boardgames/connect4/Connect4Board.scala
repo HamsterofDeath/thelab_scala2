@@ -287,8 +287,8 @@ object Connect4Board {
     val board = new Connect4Board
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
-      20,
-      maxLeafEvals = Some(5000000),
+      50,
+      maxLeafEvals = Some(12000000),
       Connect4Rating,
       Connect4Printer,
       true,
@@ -323,12 +323,12 @@ object Connect4Board {
 
     AutoPlay.playTwoPlayerGame[PlaceCoin, Connect4Board](
       ctx,
-      firstPlayer = (context: GameContext[PlaceCoin, Connect4Board]) => {
-        println("Your move?")
-        askInput(context)
-
-      },
-      //firstPlayer = BoardPlayer.autoPlayer,
+      //      firstPlayer = (context: GameContext[PlaceCoin, Connect4Board]) => {
+      //        println("Your move?")
+      //        askInput(context)
+      //
+      //      },
+      firstPlayer = BoardPlayer.autoPlayer,
       secondPlayer = BoardPlayer.autoPlayer
     )
   }
