@@ -6,7 +6,7 @@ trait Board[M <: Move] {
   def validMoves: Iterator[M]
   def applied(move: M)
   def boardState: BoardState
-  def gameNotFinished = boardState == OutcomeNotDetermined
+  def gameNotFinished: Boolean = boardState == OutcomeNotDetermined
   def isTurnOfMaximizingPlayer: Boolean
 }
 
@@ -24,7 +24,7 @@ trait MoveCacheSupport[M <: Move, B <: Board[M]] {
 }
 
 object MoveCacheSupport {
-  def noSupport[M <: Move, B <: Board[M]] = new MoveCacheSupport[M, B] {
+  def noSupport[M <: Move, B <: Board[M]]: MoveCacheSupport[M, B] = new MoveCacheSupport[M, B] {
     override def clear(): Unit = {}
     override def isCacheSupported(depth: Int): Boolean = false
     override def store(b: B, rating: Int): Unit =
@@ -192,7 +192,7 @@ object MoveTraverse {
                       beta: Int): Int = {
         nodes += 1
 
-        def doHardWork = {
+        def rateRecursive = {
           situation.applyToMe(move) // after this, it's the other player's turn
           def ratingOfCurrent = {
             leafs += 1
@@ -260,12 +260,14 @@ object MoveTraverse {
             cacheSupport.getRating(situation)
           } else {
             cached += 1
-            val ratingOfThisMove = doHardWork
+            val ratingOfThisMove = rateRecursive
+            situation.applyToMe(move)
             cacheSupport.store(situation, ratingOfThisMove)
+            situation.undo(move)
             ratingOfThisMove
           }
         } else {
-          doHardWork
+          rateRecursive
         }
 
       }

@@ -64,7 +64,11 @@ case object Red7 extends RedPlayerMove {
 }
 
 class Connect4Board extends MutableBoard[PlaceCoin] {
+  def hasAnyPlayerWon: Boolean = winner.isDefined
+
   def numberOfMovesMade: Int = movesPlayed
+
+  def maxRemainingMoves = maxMoves - numberOfMovesMade
 
   def stateAsBits: (Long, Long) = (bluePlayerBits, redPlayerBits)
 
@@ -95,6 +99,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     Array(Blue1, Blue2, Blue3, Blue4, Blue5, Blue6, Blue7)
   private val allRedMoves  =
     Array(Red1, Red2, Red3, Red4, Red5, Red6, Red7)
+  private val noMoves      = Array.empty[PlaceCoin]
 
   private val width    = 7
   private val height   = 6
@@ -220,10 +225,14 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
 
   override def validMoves: Iterator[PlaceCoin] = {
     val moves = {
-      if (currentPlayerIsMaximizing) {
-        allBlueMoves
+      if (winner.isEmpty) {
+        if (currentPlayerIsMaximizing) {
+          allBlueMoves
+        } else {
+          allRedMoves
+        }
       } else {
-        allRedMoves
+        noMoves
       }
     }
 
@@ -284,15 +293,15 @@ class Connect4CacheSupport extends MoveCacheSupport[PlaceCoin, Connect4Board] {
 object Connect4Rating extends BoardRating[PlaceCoin, Connect4Board] {
 
   override def rate(situation: Connect4Board): Int = {
-    if (situation.hasBluePlayerWon) 100 - situation.numberOfMovesMade
-    else if (situation.hasRedPlayerWon) -100 - situation.numberOfMovesMade
-    else {
-      if (situation.isTurnOfMaximizingPlayer) {
-        situation.numberOfMovesMade
-      } else {
-        -situation.numberOfMovesMade
-      }
-    }
+    val highPrio =
+      if (situation.hasBluePlayerWon)
+        100 + situation.maxRemainingMoves
+      else if (situation.hasRedPlayerWon)
+        -100 - situation.maxRemainingMoves
+      else 0
+
+    val lowPrio = 0
+    highPrio + lowPrio
   }
 }
 
@@ -302,7 +311,7 @@ object Connect4Board {
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
       50,
-      maxLeafEvals = Some(12000000),
+      maxLeafEvals = Some(1200000),
       Connect4Rating,
       Connect4Printer,
       true,
@@ -342,7 +351,7 @@ object Connect4Board {
         askInput(context)
 
       },
-      //      firstPlayer = BoardPlayer.autoPlayer,
+      //firstPlayer = BoardPlayer.autoPlayer,
       secondPlayer = BoardPlayer.autoPlayer
     )
   }
