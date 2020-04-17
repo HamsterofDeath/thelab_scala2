@@ -1,9 +1,10 @@
 package hod.stuff.boardgames.connect4
 
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
-import hod.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating, BoardState, GameContext, Move, MovesExhausted, MutableBoard,
-  OutcomeNotDetermined, WinnerDetermined}
+import hod.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating, BoardState, GameContext, Move, MoveCacheSupport,
+  MovesExhausted, MutableBoard, OutcomeNotDetermined, WinnerDetermined}
 
 sealed trait PlaceCoin extends Move {
   def isBlue: Boolean
@@ -63,16 +64,17 @@ case object Red7 extends RedPlayerMove {
 }
 
 class Connect4Board extends MutableBoard[PlaceCoin] {
-  def allFreeCoordinates = (0 until width).iterator.flatMap { col =>
-    (filledUpTo(col) until height).iterator.map { row =>
-      (col, row)
-    }
-  }
+  def numberOfMovesMade: Int = movesPlayed
 
-  def nextPossibleMoveCoordinates = validMoves
-    .map(_.column)
-    .map { col => col -> filledUpTo(col) }
-    .filter(e => e._2 < height)
+  def stateAsBits: (Long, Long) = (bluePlayerBits, redPlayerBits)
+
+  def nextPossibleMoveCoordinates =
+    validMoves
+      .map(_.column)
+      .map { col =>
+        col -> filledUpTo(col)
+      }
+      .filter(e => e._2 < height)
 
   def isTopReached(col: Int) = filledUpTo(col) >= height
 
@@ -90,8 +92,9 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   }
 
   private val allBlueMoves =
-    List(Blue1, Blue2, Blue3, Blue4, Blue5, Blue6, Blue7)
-  private val allRedMoves  = List(Red1, Red2, Red3, Red4, Red5, Red6, Red7)
+    Array(Blue1, Blue2, Blue3, Blue4, Blue5, Blue6, Blue7)
+  private val allRedMoves  =
+    Array(Red1, Red2, Red3, Red4, Red5, Red6, Red7)
 
   private val width    = 7
   private val height   = 6
@@ -100,6 +103,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   private var bluePlayerBits            = 0L
   private var redPlayerBits             = 0L
   private val filledUpTo                = Array.fill(width)(0)
+  private var bitsForHeightLimitReached = 0
   private var currentPlayerIsMaximizing = true
   private val noWinner                  = Option.empty[Boolean]
   private val blueSet                   = Some(true)
@@ -170,6 +174,9 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     }
   }
 
+  private def evalBitForHeightLimitReached(x: Int) =
+    if (filledUpTo(x) >= height) 1 << x else 0
+
   private def set(firstPlayer: Boolean, x: Int, y: Int) = {
     val oneBitSet = {
       nthBitSet(x, y)
@@ -180,6 +187,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
       redPlayerBits |= oneBitSet
     }
     filledUpTo(x) += 1
+    bitsForHeightLimitReached |= evalBitForHeightLimitReached(x)
     checkGameOver(firstPlayer, x, y)
     movesPlayed += 1
     currentPlayerIsMaximizing = !currentPlayerIsMaximizing
@@ -195,6 +203,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
       redPlayerBits &= oneBitSet
     }
     filledUpTo(x) -= 1
+    bitsForHeightLimitReached &= ~(1 << x)
     winner = noWinner
     movesPlayed -= 1
     currentPlayerIsMaximizing = !currentPlayerIsMaximizing
@@ -217,9 +226,12 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
         allRedMoves
       }
     }
-    moves.filter { move =>
-      filledUpTo(move.column) < height
-    }.iterator
+
+    val bitsCopy = bitsForHeightLimitReached
+    moves.iterator.filter { move =>
+      val check = 1 << move.column
+      (bitsCopy & check) != check
+    }
   }
 
   override def applied(move: PlaceCoin): Unit = {
@@ -258,25 +270,27 @@ object Connect4Printer extends BoardPrinter[PlaceCoin, Connect4Board] {
   }
 }
 
+class Connect4CacheSupport extends MoveCacheSupport[PlaceCoin, Connect4Board] {
+  private val cache = mutable.HashMap.empty[(Long, Long), Int]
+  override def clear(): Unit = cache.clear()
+  override def isCacheSupported(depth: Int): Boolean = depth <= 14
+  override def store(b: Connect4Board, rating: Int): Unit =
+    cache.put(b.stateAsBits, rating)
+  override def hasRatingStored(b: Connect4Board): Boolean =
+    cache.contains(b.stateAsBits)
+  override def getRating(b: Connect4Board): Int = cache(b.stateAsBits)
+}
+
 object Connect4Rating extends BoardRating[PlaceCoin, Connect4Board] {
-  private val smart = true
 
   override def rate(situation: Connect4Board): Int = {
-    if (situation.hasBluePlayerWon) 100
-    else if (situation.hasRedPlayerWon) -100
+    if (situation.hasBluePlayerWon) 100 - situation.numberOfMovesMade
+    else if (situation.hasRedPlayerWon) -100 - situation.numberOfMovesMade
     else {
-      if (smart) {
-        if (situation.isTurnOfMaximizingPlayer) {
-          situation.nextPossibleMoveCoordinates.map { case (x, y) =>
-            situation.countMaxOwnedInLine(true, x, y)
-          }.sum
-        } else {
-          situation.nextPossibleMoveCoordinates.map { case (x, y) =>
-            situation.countMaxOwnedInLine(false, x, y)
-          }.sum * -1
-        }
+      if (situation.isTurnOfMaximizingPlayer) {
+        situation.numberOfMovesMade
       } else {
-        0
+        -situation.numberOfMovesMade
       }
     }
   }
@@ -288,11 +302,12 @@ object Connect4Board {
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
       50,
-      maxLeafEvals = Some(1200000),
+      maxLeafEvals = Some(12000000),
       Connect4Rating,
       Connect4Printer,
       true,
-      false
+      false,
+      Some(new Connect4CacheSupport)
     )
 
     def askInput(context: GameContext[PlaceCoin, Connect4Board]) = {
