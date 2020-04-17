@@ -412,7 +412,6 @@ object ChessBoard {
       None,
       ChessRating,
       ChessPrinter,
-      false,
       alphaBetaPruning = true
     )
     AutoPlay.playTwoPlayerGame(ctx)

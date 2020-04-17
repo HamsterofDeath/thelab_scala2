@@ -1,7 +1,6 @@
 package hod.stuff.boardgames.logic
 
 import scala.collection.mutable
-import scala.util.Random
 
 trait Board[M <: Move] {
   def validMoves: Iterator[M]
@@ -55,11 +54,9 @@ class GameContext[M <: Move, B <: MutableBoard[M]](
                                                     val maxLeafEvals: Option[Int],
                                                     val rating: BoardRating[M, B],
                                                     val printer: BoardPrinter[M, B],
-                                                    val stableMoveChoice: Boolean = true,
                                                     val alphaBetaPruning: Boolean = true,
                                                     val abortOnLoop: Boolean = true
                                                   ) {
-  if (alphaBetaPruning) require(stableMoveChoice)
   def printForConsole = {
     printer.printBoard(board)
   }
@@ -245,9 +242,9 @@ object MoveTraverse {
         rating
       }
 
-      val moves = context.board.validMoves.toList.map { move =>
+      val moves = context.board.validMoves.map { move =>
         move -> rateMove(move)
-      }
+      }.toList
 
       val bestRating = {
         val justRatings = moves.iterator.map(_._2)
@@ -258,15 +255,7 @@ object MoveTraverse {
         }
       }
 
-      val randomMove = {
-        val candidates = moves.filter(_._2 == bestRating).map(_._1)
-        if (context.stableMoveChoice) {
-          candidates.head
-        } else {
-          candidates(new Random().nextInt(candidates.size))
-        }
-      }
-      (randomMove, leafs, bestRating)
+      (moves.find(_._2 == bestRating).get._1, leafs, bestRating)
     }
 
     var maxDepth = 0
