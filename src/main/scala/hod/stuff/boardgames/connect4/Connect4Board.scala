@@ -311,7 +311,7 @@ object Connect4Board {
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
       50,
-      maxLeafEvals = Some(1200000),
+      maxLeafEvals = Some(16000000),
       Connect4Rating,
       Connect4Printer,
       true,
