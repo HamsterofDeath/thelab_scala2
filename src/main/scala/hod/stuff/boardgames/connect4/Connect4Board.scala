@@ -1,6 +1,7 @@
 package hod.stuff.boardgames.connect4
 
 import scala.collection.mutable
+import scala.io.AnsiColor
 import scala.util.{Failure, Success, Try}
 
 import hod.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating, BoardState, GameContext, Move, MoveCacheSupport,
@@ -66,10 +67,12 @@ case object Red7 extends RedPlayerMove {
 class Connect4Board extends MutableBoard[PlaceCoin] {
 
   private def isTrapPrepared(bluePlayer: Boolean): Boolean = {
-    nextPossibleMoveCoordinates.exists { case (x, y) =>
-      y > 0 &&
-      countMaxOwnedInLine(bluePlayer, x, y) >= requiredInLine - 1 &&
-      countMaxOwnedInLine(bluePlayer, x, y - 1) >= requiredInLine - 1
+    nextPossibleMoveCoordinates.exists {
+      case (x, y) =>
+        val almostComplete = requiredInLine - 1
+        y > 0 &&
+        countMaxOwnedInLine(bluePlayer, x, y) >= almostComplete &&
+        countMaxOwnedInLine(bluePlayer, x, y - 1) >= almostComplete
     }
   }
 
@@ -164,16 +167,40 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     val currentFieldValue = if (isCurrentFieldSet) 1 else 0
 
     def leftRight =
-      currentFieldValue + countInLine(bits, x, y, -1, 0) + countInLine(bits, x, y, 1, 0)
+      currentFieldValue + countInLine(bits, x, y, -1, 0) + countInLine(
+        bits,
+        x,
+        y,
+        1,
+        0
+      )
 
     def upDown =
-      currentFieldValue + countInLine(bits, x, y, 0, -1) + countInLine(bits, x, y, 0, 1)
+      currentFieldValue + countInLine(bits, x, y, 0, -1) + countInLine(
+        bits,
+        x,
+        y,
+        0,
+        1
+      )
 
     def slash =
-      currentFieldValue + countInLine(bits, x, y, -1, -1) + countInLine(bits, x, y, 1, 1)
+      currentFieldValue + countInLine(bits, x, y, -1, -1) + countInLine(
+        bits,
+        x,
+        y,
+        1,
+        1
+      )
 
     def backSlash =
-      currentFieldValue + countInLine(bits, x, y, -1, 1) + countInLine(bits, x, y, 1, -1)
+      currentFieldValue + countInLine(bits, x, y, -1, 1) + countInLine(
+        bits,
+        x,
+        y,
+        1,
+        -1
+      )
 
     leftRight max upDown max slash max backSlash
   }
@@ -280,21 +307,35 @@ object Connect4Printer extends BoardPrinter[PlaceCoin, Connect4Board] {
     s"Player ${if (move.isBlue) "Blue" else "Red"} in column ${move.column + 1}"
   }
   override def printBoard(board: Connect4Board): String = {
-    "1234567\n" +
-    (0 to 5 map { row =>
-      (0 to 6 map { col =>
-        board.fieldState(col, 5 - row) match {
-          case Some(true) => colored("X", Colors.ANSI_BLUE)
-          case Some(false) => colored("O", Colors.ANSI_RED)
-          case None => " "
-        }
+    val raw = {
+      "1234567\n" +
+      (0 to 5 map { row =>
+        (0 to 6 map { col =>
+          board.fieldState(col, 5 - row) match {
+            case Some(true) => "X"
+            case Some(false) => "O"
+            case None => " "
+          }
 
-      }).mkString
-    }).mkString("\n") + "\n1234567"
+        }).mkString
+      }).mkString("\n") + "\n1234567"
+    }
+    raw.linesIterator
+       .map(_.mkString(" | "))
+       .mkString("\n--------------------------\n")
+       .map(_.toString)
+       .map {
+         case "X" => colored("X", AnsiColor.BLUE)
+         case "O" => colored("O", AnsiColor.RED)
+         case bar if bar == "|" || bar == "-" => colored(bar, AnsiColor.CYAN)
+         case other => other
+       }
+       .mkString
   }
 }
 
-class Connect4CacheSupport(cacheUpToDepth: Int) extends MoveCacheSupport[PlaceCoin, Connect4Board] {
+class Connect4CacheSupport(cacheUpToDepth: Int)
+  extends MoveCacheSupport[PlaceCoin, Connect4Board] {
   private val cache = mutable.HashMap.empty[(Long, Long), Int]
   override def clear(): Unit = cache.clear()
   override def isCacheSupported(depth: Int): Boolean = depth <= cacheUpToDepth
@@ -347,7 +388,7 @@ object Connect4Board {
       Connect4Printer,
       true,
       false,
-      Some(new Connect4CacheSupport(16))
+      Some(new Connect4CacheSupport(18))
     )
 
     def askInput(context: GameContext[PlaceCoin, Connect4Board]) = {

@@ -2,6 +2,7 @@ package hod.stuff.boardgames.logic
 
 import java.text.{DecimalFormat, DecimalFormatSymbols}
 import scala.collection.mutable
+import scala.io.AnsiColor
 
 trait Board[M <: Move] {
   def validMoves: Iterator[M]
@@ -55,19 +56,8 @@ trait BoardRating[M <: Move, B <: Board[M]] {
 }
 
 trait BoardPrinter[M <: Move, B <: Board[M]] {
-  object Colors {
-    val ANSI_RESET  = "\u001B[0m"
-    val ANSI_BLACK  = "\u001B[30m"
-    val ANSI_RED    = "\u001B[31m"
-    val ANSI_GREEN  = "\u001B[32m"
-    val ANSI_YELLOW = "\u001B[33m"
-    val ANSI_BLUE   = "\u001B[34m"
-    val ANSI_PURPLE = "\u001B[35m"
-    val ANSI_CYAN   = "\u001B[36m"
-    val ANSI_WHITE  = "\u001B[37m"
-  }
 
-  def colored(str: String, color: String) = s"$color$str${Colors.ANSI_RESET}"
+  def colored(str: String, color: String) = s"$color$str${AnsiColor.RESET}"
   def printBoard(board: B): String
   def printMove(move: M, board: B): String = move.toString
 }
@@ -162,7 +152,7 @@ object MoveTraverse {
   def searchBestMove[M <: Move, B <: MutableBoard[M]](
                                                        context: GameContext[M, B]
                                                      ): M = {
-
+    val start = System.currentTimeMillis()
     case class SearchResult(move: M, nodes: Int, leafs: Int, rating: Int, cached: Int, cacheHits: Int)
     def evalWithMaxDepth(depthLimit: Int): SearchResult = {
       val cacheSupport =
@@ -351,17 +341,21 @@ object MoveTraverse {
     }
 
     if (debug) {
+      val end         = System.currentTimeMillis()
+      val elapsed     = (end - start) / 1000.0
       val bestMoveLog = context.printer.printMove(result.move, context.board)
       val sym         = new DecimalFormatSymbols()
       sym.setGroupingSeparator('.')
-      val df = new DecimalFormat("#0", sym)
+      val df        = new DecimalFormat("###,###,###,###", sym)
+      val dfSeconds = new DecimalFormat("#0.00")
       println {
         s"Best move is $bestMoveLog " +
         s"with a rating of ${df.format(result.rating)} " +
         s"after ${df.format(result.nodes)} checks " +
         s"at depth $maxDepth, " +
         s"${df.format(result.cacheHits)} cache hits, " +
-        s"${df.format(result.cached)} cache size"
+        s"${df.format(result.cached)} cache size " +
+        s"in ${dfSeconds.format(elapsed)}s"
       }
     }
     result.move
