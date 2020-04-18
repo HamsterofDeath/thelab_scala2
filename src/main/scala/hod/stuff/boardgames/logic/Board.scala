@@ -1,5 +1,6 @@
 package hod.stuff.boardgames.logic
 
+import java.text.{DecimalFormat, DecimalFormatSymbols}
 import scala.collection.mutable
 
 trait Board[M <: Move] {
@@ -48,7 +49,9 @@ trait MutableBoard[M <: Move] extends Board[M] {
 trait Move
 
 trait BoardRating[M <: Move, B <: Board[M]] {
-  def rate(situation: B): Int
+  def supportsNodeRatingAtDepth(i: Int): Boolean = false
+  def rateNode(situation: B): Int = 0
+  def rateLeaf(situation: B): Int
 }
 
 trait BoardPrinter[M <: Move, B <: Board[M]] {
@@ -160,7 +163,8 @@ object MoveTraverse {
                                                        context: GameContext[M, B]
                                                      ): M = {
 
-    def evalWithMaxDepth(depthLimit: Int) = {
+    case class SearchResult(move: M, nodes: Int, leafs: Int, rating: Int, cached: Int, cacheHits: Int)
+    def evalWithMaxDepth(depthLimit: Int): SearchResult = {
       val cacheSupport =
         context.moveCacheSupport.getOrElse(MoveCacheSupport.noSupport)
       cacheSupport.clear()
@@ -196,7 +200,7 @@ object MoveTraverse {
           situation.applyToMe(move) // after this, it's the other player's turn
           def ratingOfCurrent = {
             leafs += 1
-            rating.rate(situation)
+            rating.rateLeaf(situation)
           }
 
           val moveRating = remainingDepth match {
@@ -208,14 +212,34 @@ object MoveTraverse {
                   var myAlpha = alpha
                   var myBeta  = beta
 
-                  val ratings         = situation.validMoves.map { move =>
-                    valueOfMove(
-                      move,
-                      remainingDepth - 1,
-                      !maximizingPlayersTurn,
-                      myAlpha,
-                      myBeta
-                    )
+                  val ratings         = {
+                    val sortedMoves = {
+                      if (context.rating.supportsNodeRatingAtDepth(depthLimit - remainingDepth)) {
+                        situation.validMoves.toList.sortBy { nextMoveOption =>
+                          situation.applyToMe(nextMoveOption)
+                          val quickRating = {
+                            if (maximizingPlayersTurn)
+                              context.rating.rateNode(situation)
+                            else
+                              -context.rating.rateNode(situation)
+                          }
+
+                          situation.undo(nextMoveOption)
+                          quickRating
+                        }.iterator
+                      } else {
+                        situation.validMoves
+                      }
+                    }
+                    sortedMoves.map { move =>
+                      valueOfMove(
+                        move,
+                        remainingDepth - 1,
+                        !maximizingPlayersTurn,
+                        myAlpha,
+                        myBeta
+                      )
+                    }
                   }
                   // this is flipped because the move to be tested has already been made
                   val valueOfBestMove = {
@@ -301,24 +325,25 @@ object MoveTraverse {
         }
       }
 
-      (moves.find(_._2 == bestRating).get._1, leafs, bestRating, cached, cacheHits)
+      SearchResult(moves.find(_._2 == bestRating).get._1, nodes, leafs, bestRating, cached, cacheHits)
     }
 
     var maxDepth                                = 0
-    val (bestMove, evals, rating, cached, hits) = {
+    val result = {
       context.maxLeafEvals match {
         case Some(leafs) =>
-          var fallback = Option.empty[(M, Int, Int, Int, Int)]
-          (1 to context.maxSearchDepth).iterator
-                                       .map { tryDepth =>
-                                         val trip = evalWithMaxDepth(tryDepth)
-                                         fallback = Some(trip)
-                                         maxDepth = tryDepth
-                                         trip
-                                       }
-                                       .find(_._2 > leafs)
-                                       .orElse(fallback)
-                                       .get
+          var fallback   = Option.empty[SearchResult]
+          val depthRange = 1 to context.maxSearchDepth
+          depthRange.iterator
+                    .map { tryDepth =>
+                      val trip = evalWithMaxDepth(tryDepth)
+                      fallback = Some(trip)
+                      maxDepth = tryDepth
+                      trip
+                    }
+                    .find(_.leafs > leafs)
+                    .orElse(fallback)
+                    .get
         case None =>
           maxDepth = context.maxSearchDepth
           evalWithMaxDepth(context.maxSearchDepth)
@@ -326,12 +351,20 @@ object MoveTraverse {
     }
 
     if (debug) {
-      val bestMoveLog = context.printer.printMove(bestMove, context.board)
+      val bestMoveLog = context.printer.printMove(result.move, context.board)
+      val sym         = new DecimalFormatSymbols()
+      sym.setGroupingSeparator('.')
+      val df = new DecimalFormat("#0", sym)
       println {
-        s"Best move is $bestMoveLog with a rating of $rating after $evals checks at depth $maxDepth, $hits cache hits, $cached cache size"
+        s"Best move is $bestMoveLog " +
+        s"with a rating of ${df.format(result.rating)} " +
+        s"after ${df.format(result.nodes)} checks " +
+        s"at depth $maxDepth, " +
+        s"${df.format(result.cacheHits)} cache hits, " +
+        s"${df.format(result.cached)} cache size"
       }
     }
-    bestMove
+    result.move
   }
 
 }

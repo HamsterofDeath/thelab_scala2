@@ -370,7 +370,7 @@ class ChessBoard extends MutableBoard[ChessMove] {
 }
 
 object ChessRating extends BoardRating[ChessMove, ChessBoard] {
-  override def rate(situation: ChessBoard): Int = {
+  override def rateLeaf(situation: ChessBoard): Int = {
     situation.activePiecesSum(White) * 100 -
     situation.activePiecesSum(Black) * 100 +
     //situation.attackableFieldsSum(White) -

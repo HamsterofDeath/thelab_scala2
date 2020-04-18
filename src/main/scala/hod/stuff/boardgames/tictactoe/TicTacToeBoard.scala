@@ -96,7 +96,7 @@ class TicTacToeBoard extends MutableBoard[PlaceMarker] {
 }
 
 object TicTacToeRating extends BoardRating[PlaceMarker, TicTacToeBoard] {
-  override def rate(situation: TicTacToeBoard): Int = {
+  override def rateLeaf(situation: TicTacToeBoard): Int = {
     situation.rateSelfAsSeenFromPlayerOne()
   }
 }

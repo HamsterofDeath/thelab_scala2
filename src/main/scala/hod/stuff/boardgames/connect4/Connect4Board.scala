@@ -64,11 +64,24 @@ case object Red7 extends RedPlayerMove {
 }
 
 class Connect4Board extends MutableBoard[PlaceCoin] {
+
+  private def isTrapPrepared(bluePlayer: Boolean): Boolean = {
+    nextPossibleMoveCoordinates.exists { case (x, y) =>
+      y > 0 &&
+      countMaxOwnedInLine(bluePlayer, x, y) >= requiredInLine - 1 &&
+      countMaxOwnedInLine(bluePlayer, x, y - 1) >= requiredInLine - 1
+    }
+  }
+
+  def hasBluePlayerTrap: Boolean = isTrapPrepared(true)
+
+  def hasRedPlayerTrap: Boolean = isTrapPrepared(false)
+
   def hasAnyPlayerWon: Boolean = winner.isDefined
 
   def numberOfMovesMade: Int = movesPlayed
 
-  def maxRemainingMoves = maxMoves - numberOfMovesMade
+  def maxRemainingMoves: Int = maxMoves - numberOfMovesMade
 
   def stateAsBits: (Long, Long) = (bluePlayerBits, redPlayerBits)
 
@@ -145,20 +158,22 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     found
   }
 
-  def countMaxOwnedInLine(blue: Boolean, x: Int, y: Int): Int = {
-    val bits = if (blue) bluePlayerBits else redPlayerBits
+  private def countMaxOwnedInLine(blue: Boolean, x: Int, y: Int): Int = {
+    val bits              = if (blue) bluePlayerBits else redPlayerBits
+    val isCurrentFieldSet = isSet(bits, x, y)
+    val currentFieldValue = if (isCurrentFieldSet) 1 else 0
 
     def leftRight =
-      1 + countInLine(bits, x, y, -1, 0) + countInLine(bits, x, y, 1, 0)
+      currentFieldValue + countInLine(bits, x, y, -1, 0) + countInLine(bits, x, y, 1, 0)
 
     def upDown =
-      1 + countInLine(bits, x, y, 0, -1) + countInLine(bits, x, y, 0, 1)
+      currentFieldValue + countInLine(bits, x, y, 0, -1) + countInLine(bits, x, y, 0, 1)
 
     def slash =
-      1 + countInLine(bits, x, y, -1, -1) + countInLine(bits, x, y, 1, 1)
+      currentFieldValue + countInLine(bits, x, y, -1, -1) + countInLine(bits, x, y, 1, 1)
 
     def backSlash =
-      1 + countInLine(bits, x, y, -1, 1) + countInLine(bits, x, y, 1, -1)
+      currentFieldValue + countInLine(bits, x, y, -1, 1) + countInLine(bits, x, y, 1, -1)
 
     leftRight max upDown max slash max backSlash
   }
@@ -169,7 +184,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     countMaxOwnedInLine(blue, x, y) >= requiredInLine
   }
 
-  private def checkGameOver(firstPlayer: Boolean, x: Int, y: Int) = {
+  private def checkGameOver(firstPlayer: Boolean, x: Int, y: Int): Unit = {
     if (isGameOver(firstPlayer, x, y)) {
       if (firstPlayer) {
         winner = blueSet
@@ -182,7 +197,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   private def evalBitForHeightLimitReached(x: Int) =
     if (filledUpTo(x) >= height) 1 << x else 0
 
-  private def set(firstPlayer: Boolean, x: Int, y: Int) = {
+  private def set(firstPlayer: Boolean, x: Int, y: Int): Unit = {
     val oneBitSet = {
       nthBitSet(x, y)
     }
@@ -279,10 +294,10 @@ object Connect4Printer extends BoardPrinter[PlaceCoin, Connect4Board] {
   }
 }
 
-class Connect4CacheSupport extends MoveCacheSupport[PlaceCoin, Connect4Board] {
+class Connect4CacheSupport(cacheUpToDepth: Int) extends MoveCacheSupport[PlaceCoin, Connect4Board] {
   private val cache = mutable.HashMap.empty[(Long, Long), Int]
   override def clear(): Unit = cache.clear()
-  override def isCacheSupported(depth: Int): Boolean = depth <= 14
+  override def isCacheSupported(depth: Int): Boolean = depth <= cacheUpToDepth
   override def store(b: Connect4Board, rating: Int): Unit =
     cache.put(b.stateAsBits, rating)
   override def hasRatingStored(b: Connect4Board): Boolean =
@@ -292,15 +307,31 @@ class Connect4CacheSupport extends MoveCacheSupport[PlaceCoin, Connect4Board] {
 
 object Connect4Rating extends BoardRating[PlaceCoin, Connect4Board] {
 
-  override def rate(situation: Connect4Board): Int = {
+  override def supportsNodeRatingAtDepth(i: Int): Boolean = true
+
+  override def rateNode(situation: Connect4Board): Int = {
+    if (situation.hasBluePlayerWon) 1
+    else if (situation.hasRedPlayerWon) -1
+    else 0
+  }
+
+  override def rateLeaf(situation: Connect4Board): Int = {
+    val mercy = {
+      situation.maxRemainingMoves
+    }
+
     val highPrio =
       if (situation.hasBluePlayerWon)
-        100 + situation.maxRemainingMoves
+        1000 + mercy
       else if (situation.hasRedPlayerWon)
-        -100 - situation.maxRemainingMoves
+        -1000 - mercy
       else 0
 
-    val lowPrio = 0
+    val lowPrio = {
+      if (situation.hasBluePlayerTrap) 500
+      else if (situation.hasRedPlayerTrap) -500
+      else 0
+    }
     highPrio + lowPrio
   }
 }
@@ -311,12 +342,12 @@ object Connect4Board {
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
       50,
-      maxLeafEvals = Some(16000000),
+      maxLeafEvals = Some(1200000),
       Connect4Rating,
       Connect4Printer,
       true,
       false,
-      Some(new Connect4CacheSupport)
+      Some(new Connect4CacheSupport(16))
     )
 
     def askInput(context: GameContext[PlaceCoin, Connect4Board]) = {
