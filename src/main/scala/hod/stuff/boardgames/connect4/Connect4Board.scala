@@ -66,6 +66,8 @@ case object Red7 extends RedPlayerMove {
 
 class Connect4Board extends MutableBoard[PlaceCoin] {
 
+  type BoardBits = (Long, Long)
+
   private def isTrapPrepared(bluePlayer: Boolean): Boolean = {
     nextPossibleMoveCoordinates.exists {
       case (x, y) =>
@@ -86,7 +88,9 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
 
   def maxRemainingMoves: Int = maxMoves - numberOfMovesMade
 
-  def stateAsBits: (Long, Long) = (bluePlayerBits, redPlayerBits)
+  def stateAsBits: BoardBits = (bluePlayerBits, redPlayerBits)
+
+  def mirroredStateAsBits: BoardBits = (bluePlayerBitsMirrored, redPlayerBitsMirrored)
 
   def nextPossibleMoveCoordinates =
     validMoves
@@ -123,6 +127,8 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
 
   private var bluePlayerBits            = 0L
   private var redPlayerBits             = 0L
+  private var bluePlayerBitsMirrored    = 0L
+  private var redPlayerBitsMirrored     = 0L
   private val filledUpTo                = Array.fill(width)(0)
   private var bitsForHeightLimitReached = 0
   private var currentPlayerIsMaximizing = true
@@ -225,13 +231,18 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     if (filledUpTo(x) >= height) 1 << x else 0
 
   private def set(firstPlayer: Boolean, x: Int, y: Int): Unit = {
-    val oneBitSet = {
+    val oneBitSet         = {
       nthBitSet(x, y)
+    }
+    val oneBitSetMirrored = {
+      nthBitSetMirrored(x, y)
     }
     if (firstPlayer) {
       bluePlayerBits |= oneBitSet
+      bluePlayerBitsMirrored |= oneBitSetMirrored
     } else {
       redPlayerBits |= oneBitSet
+      redPlayerBitsMirrored |= oneBitSetMirrored
     }
     filledUpTo(x) += 1
     bitsForHeightLimitReached |= evalBitForHeightLimitReached(x)
@@ -241,13 +252,15 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   }
 
   private def unset(firstPlayer: Boolean, x: Int, y: Int) = {
-    val oneBitSet = {
-      ~nthBitSet(x, y)
-    }
+    val oneBitUnSet         = ~nthBitSet(x, y)
+    val oneBitUnSetMirrored = ~nthBitSetMirrored(x, y)
+
     if (firstPlayer) {
-      bluePlayerBits &= oneBitSet
+      bluePlayerBits &= oneBitUnSet
+      bluePlayerBitsMirrored &= oneBitUnSetMirrored
     } else {
-      redPlayerBits &= oneBitSet
+      redPlayerBits &= oneBitUnSet
+      redPlayerBitsMirrored &= oneBitUnSetMirrored
     }
     filledUpTo(x) -= 1
     bitsForHeightLimitReached &= ~(1 << x)
@@ -259,6 +272,10 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   private def nthBitSet(x: Int, y: Int) = {
     val n = x + y * width
     1L << n
+  }
+
+  private def nthBitSetMirrored(x: Int, y: Int) = {
+    nthBitSet(width - x - 1, y)
   }
 
   override def undo(move: PlaceCoin): Unit = {
@@ -339,11 +356,24 @@ class Connect4CacheSupport(cacheUpToDepth: Int)
   private val cache = mutable.HashMap.empty[(Long, Long), Int]
   override def clear(): Unit = cache.clear()
   override def isCacheSupported(depth: Int): Boolean = depth <= cacheUpToDepth
-  override def store(b: Connect4Board, rating: Int): Unit =
+
+  override def store(b: Connect4Board, rating: Int): Unit = {
     cache.put(b.stateAsBits, rating)
+    //    cache.put(b.mirroredStateAsBits, rating)
+  }
+
   override def hasRatingStored(b: Connect4Board): Boolean =
-    cache.contains(b.stateAsBits)
-  override def getRating(b: Connect4Board): Int = cache(b.stateAsBits)
+    cache.contains(b.stateAsBits) || cache.contains(b.mirroredStateAsBits)
+
+  override def getRating(b: Connect4Board): Int = {
+    //    cache(b.stateAsBits)
+    val bits = b.stateAsBits
+    if (cache.contains(bits)) {
+      cache(bits)
+    } else {
+      cache(b.mirroredStateAsBits)
+    }
+  }
 }
 
 object Connect4Rating extends BoardRating[PlaceCoin, Connect4Board] {
@@ -383,7 +413,7 @@ object Connect4Board {
     val ctx   = new GameContext[PlaceCoin, Connect4Board](
       board,
       50,
-      maxLeafEvals = Some(1200000),
+      maxLeafEvals = Some(1000000),
       Connect4Rating,
       Connect4Printer,
       true,

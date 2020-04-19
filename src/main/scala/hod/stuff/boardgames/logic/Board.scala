@@ -351,7 +351,7 @@ object MoveTraverse {
       println {
         s"Best move is $bestMoveLog " +
         s"with a rating of ${df.format(result.rating)} " +
-        s"after ${df.format(result.nodes)} checks " +
+        s"after ${df.format(result.nodes)} nodes/ ${df.format(result.leafs)} leafs " +
         s"at depth $maxDepth, " +
         s"${df.format(result.cacheHits)} cache hits, " +
         s"${df.format(result.cached)} cache size " +
