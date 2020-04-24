@@ -4,6 +4,12 @@ import java.io.File
 
 object Euler89 {
   def main(args: Array[String]): Unit = {
+    measured {
+      solveIt
+    }
+  }
+
+  private def solveIt = {
     val numerals   = new File("resource/roman.txt").slurp.toList
     val totalChars = numerals.mkString.length
 
