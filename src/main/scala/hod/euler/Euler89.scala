@@ -65,7 +65,7 @@ object Euler89 {
 
   private def integerToRoman(value: Int) = {
     var todo   = value
-    var result = new StringBuilder()
+    val result = new StringBuilder()
     while (todo > 0) {
       val (roman, singleValue) = highestRoman(todo)
       todo -= singleValue
