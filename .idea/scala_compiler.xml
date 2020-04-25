@@ -4,6 +4,6 @@
     <profile name="sbt 1" modules="thelab_4127">
       <option name="higherKinds" value="true" />
     </profile>
-    <profile name="sbt 2" modules="hamsterofdeath.thelab" />
+    <profile name="sbt 2" modules="IdeaProjects.thelab,hamsterofdeath.thelab" />
   </component>
 </project>

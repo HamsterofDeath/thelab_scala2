@@ -105,6 +105,7 @@
           <option value="net.veact" />
         </array>
       </option>
+      <option name="FORMATTER" value="1" />
     </ScalaCodeStyleSettings>
     <XML>
       <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
