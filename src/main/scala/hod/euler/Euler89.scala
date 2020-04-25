@@ -20,19 +20,19 @@ object Euler89 {
   }
 
   private def romanStringToInteger(str: String) = {
-    var current = Option.empty[Char]
-    var next    = Option.empty[Char]
+    var current = ' '
+    var next    = ' '
 
-    def currentValue = romanToDecimal(current.get)
+    def currentValue = romanToDecimal(current)
 
-    def nextValue = romanToDecimal(next.get)
+    def nextValue = romanToDecimal(next)
 
     var sum = 0
     str.foreach { char =>
-      if (current.isEmpty) {
-        current = Some(char)
+      if (current == ' ') {
+        current = char
       } else {
-        next = Some(char)
+        next = char
         if (currentValue >= nextValue) {
           sum += currentValue
         } else {

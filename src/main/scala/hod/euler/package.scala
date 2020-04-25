@@ -38,10 +38,10 @@ package object euler {
 
   def measured[T](t: => T) = {
     println("Operation start")
-    val start = System.currentTimeMillis()
-    val ret = t
-    val end = System.currentTimeMillis()
-    println(s"Operation took ${(end.toDouble - start)/1000} sec")
+    val start = System.nanoTime()
+    val ret   = t
+    val end   = System.nanoTime()
+    println(s"Operation took ${(end.toDouble - start) / 1000000000L} sec")
     ret
   }
 
