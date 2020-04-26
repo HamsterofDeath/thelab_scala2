@@ -248,6 +248,17 @@ package object euler {
 
   implicit class LongOps(val l: Long) extends AnyVal {
 
+    def allDigits:Iterator[Int] = {
+      var number = l
+      Iterator.continually {
+        val digit = number % 10
+        number = number / 10
+        digit.toInt
+      }.takeWhilePlusOne { _ =>
+        number > 0
+      }
+    }
+
     def sqrtPrecise(scale: Int): BigDecimal = {
       val mc = new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal.decimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
@@ -323,6 +334,8 @@ package object euler {
         cache(i)
       }
     }
+
+    def takeWhilePlusOne(filter: T => Boolean) = stopAfter(e => !filter(e))
 
     def stopAfter(isLastAccepted: T => Boolean): Iterator[T] = {
       var stop = false
