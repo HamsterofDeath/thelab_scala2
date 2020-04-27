@@ -1,7 +1,6 @@
 package hod.euler
 
 import scala.collection.mutable
-import scala.collection.parallel._
 
 object Euler178 {
   private val cache = mutable.HashMap.empty[(Int, Int, Int), Long]
@@ -57,7 +56,5 @@ object Euler178 {
 
     }
     println(total)
-
   }
-
 }
