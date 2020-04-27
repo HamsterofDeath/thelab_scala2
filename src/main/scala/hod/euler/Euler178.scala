@@ -6,7 +6,7 @@ import scala.collection.parallel._
 object Euler178 {
   private val cache = mutable.HashMap.empty[(Int, Int, Int), Long]
 
-  def numberSnakeCounts(n: Int) = {
+  private def numberSnakeCounts(n: Int) = {
     var cacheHit = 0L
     var cacheMiss = 0L
     def snakedySnake(remaining: Int, lastStep: Int, seenDigits: Int): Long = {
