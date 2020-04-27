@@ -6,8 +6,6 @@ object Euler178 {
   private val cache = mutable.HashMap.empty[(Int, Int, Int), Long]
 
   private def numberSnakeCounts(n: Int) = {
-    var cacheHit = 0L
-    var cacheMiss = 0L
     def snakedySnake(remaining: Int, lastStep: Int, seenDigits: Int): Long = {
       val seenDigitCount = Integer.bitCount(seenDigits)
       def recur: Long = {
@@ -30,15 +28,8 @@ object Euler178 {
         }
       }
 
-      cache.synchronized {
-        cacheHit += 1
-        val state = (remaining, lastStep, seenDigits)
-        cache.getOrElseUpdate(state, {
-          cacheMiss += 1
-          cacheHit -= 1
-          recur
-        })
-      }
+      val state = (remaining, lastStep, seenDigits)
+      cache.getOrElseUpdate(state, recur)
     }
 
     val sum = (1 to 9).map { first =>
