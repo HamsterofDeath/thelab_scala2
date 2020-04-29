@@ -470,3 +470,30 @@ package object euler {
   }
 
 }
+
+object EulerUtils {
+  def isSpecialSum(set: Iterable[Int]): Boolean = {
+    val list = set.toList.sorted
+    // check size rule
+    (1 until list.length).foreach { n =>
+      val maxWithN = list.takeRight(n).sum
+      val minWithNPlusOne = list.take(n + 1).sum
+      if (minWithNPlusOne <= maxWithN) {
+        return false
+      }
+    }
+    // check sum rule
+    (2 until list.length).foreach { n =>
+      val seenSums = mutable.HashSet.empty[Int]
+      list.combinations(n).foreach { array =>
+        val sum = array.sum
+        if (seenSums(sum)) {
+          return false
+        }
+        seenSums += sum
+      }
+    }
+
+    true
+  }
+}
