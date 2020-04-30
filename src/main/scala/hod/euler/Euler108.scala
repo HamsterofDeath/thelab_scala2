@@ -47,6 +47,8 @@ object Euler108 {
       solution.foreach(_ => {})
       -1
     }
-    println(parSearch)
+    measured {
+      println(parSearch)
+    }
   }
 }
