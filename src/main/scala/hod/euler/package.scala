@@ -122,6 +122,23 @@ package object euler {
 
   }
 
+  def primeFactorsOf(n: Long): Iterator[Long] = {
+    var remaining = n
+    allPrimesLong
+      .takeWhile(_ <= n)
+      .flatMap { prime =>
+        Iterator
+          .continually(prime)
+          .takeWhile(remaining % _ == 0)
+          .map { _ =>
+            println(prime)
+            remaining /= prime
+            prime
+          }
+      }
+    .takeWhilePlusOne(_ => remaining > 1)
+  }
+
   def allPrimes: Iterator[Int] = {
     Iterator(2, 3) ++ Iterator.from(5, 2).filter(_.isPrime)
   }

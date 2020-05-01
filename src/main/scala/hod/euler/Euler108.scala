@@ -5,6 +5,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 object Euler108 {
+
   implicit val ex = ExecutionContext.global
   def main(args: Array[String]): Unit = {
     def countSolutions(n: Long) = {
@@ -50,5 +51,12 @@ object Euler108 {
     measured {
       println(parSearch)
     }
+  }
+}
+
+object Euler110 {
+
+  def main(args: Array[String]): Unit = {
+    println(primeFactorsOf(1260*1260).toList)
   }
 }
