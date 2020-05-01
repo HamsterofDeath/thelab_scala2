@@ -54,9 +54,4 @@ object Euler108 {
   }
 }
 
-object Euler110 {
 
-  def main(args: Array[String]): Unit = {
-    println(primeFactorsOf(1260*1260).toList)
-  }
-}
