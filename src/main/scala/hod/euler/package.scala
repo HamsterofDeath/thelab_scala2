@@ -1,7 +1,6 @@
 package hod
 
-import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream,
-  FileReader}
+import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream, FileReader}
 import java.math.{BigInteger, MathContext}
 import java.util.concurrent.Executors
 import scala.collection.mutable
@@ -120,6 +119,41 @@ package object euler {
 
     Iterator.continually(nextCloserElement()).stopAfter(_ => result.nonEmpty)
 
+  }
+
+  def countDivisorsOf(n:Long) = {
+    var count = 0
+    val limit = math.sqrt(n).toLong
+    var test =1
+
+    while (test <= limit) {
+      if (n % test==0) {
+        count+=1
+      }
+      test+=1
+    }
+    count
+  }
+
+  def divisorsOf(n:Long) = {
+    val limit = math.sqrt(n).toLong
+    Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0)
+  }
+
+  def primeFactorsOf(n: Long): Iterator[Long] = {
+    var remaining = n
+    allPrimesLong
+      .takeWhile(_ <= n)
+      .flatMap { prime =>
+        Iterator
+          .continually(prime)
+          .takeWhile(remaining % _ == 0)
+          .map { _ =>
+            remaining /= prime
+            prime
+          }
+      }
+    .takeWhilePlusOne(_ => remaining > 1)
   }
 
   def allPrimes: Iterator[Int] = {
