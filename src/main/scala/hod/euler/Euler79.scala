@@ -1,10 +1,11 @@
 package hod.euler
 
 import java.io.File
+import scala.collection.parallel._
 
 object Euler79 {
   def main(args: Array[String]): Unit = {
-    val in = new File("resource/keylog.txt").slurp.toList
+    val in = ((new File("resource/keylog.txt").slurp.toList))
     def testNumber(str: String) = {
       in.forall { pin =>
         val indexes = pin.map(c => str.indexOf(c))
