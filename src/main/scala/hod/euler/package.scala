@@ -282,7 +282,7 @@ package object euler {
 
   implicit class LongOps(val l: Long) extends AnyVal {
 
-    def allDigits:Iterator[Int] = {
+    def allDigitsReversed:Iterator[Int] = {
       var number = l
       Iterator.continually {
         val digit = number % 10
