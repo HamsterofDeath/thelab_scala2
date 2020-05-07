@@ -63,14 +63,16 @@ object Euler315 {
 
     def summedSwitchCosts(start: Long, optimized: Boolean) = {
       var sum = totalOnOffCost(start)
-      val allDigitalRoots = digitalRoots(start).toList
+      val allDigitalRoots = digitalRoots(start)
+      var last = -1L
       allDigitalRoots.sliding(2).foreach { seq =>
         val addCost =
           if (optimized) totalSwitchCostOptimized(seq.head, seq.last)
           else totalSwitchCost(seq.head, seq.last)
         sum += addCost
+        last = seq.last
       }
-      sum += totalOnOffCost(allDigitalRoots.last)
+      sum += totalOnOffCost(last)
       sum
     }
 
@@ -78,7 +80,7 @@ object Euler315 {
     val end = start * 2
 
     val solution = measured {
-      val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end).toList
+      val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end)
       val solution = primes.map { prime =>
         summedSwitchCosts(prime, false) - summedSwitchCosts(prime, true)
       }.sum
