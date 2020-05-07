@@ -15,19 +15,6 @@ object Euler315 {
       List(1, 2, 3, 4, 5, 7)
     )
 
-    0 to 9 foreach { n =>
-      val active = activeBars(n)
-      def charOrNot(position:Int) = if (active.contains(position)) "X" else " "
-      val debug = s"""
-         |${charOrNot(1)}${charOrNot(1)}${charOrNot(1)}
-         |${charOrNot(4)} ${charOrNot(5)}
-         |${charOrNot(2)}${charOrNot(2)}${charOrNot(2)}
-         |${charOrNot(6)} ${charOrNot(7)}
-         |${charOrNot(3)}${charOrNot(3)}${charOrNot(3)}
-         |""".stripMargin
-      println(debug)
-    }
-
     def barsOf(n: Int) = activeBars(n)
     def digitSwitchCost(from: Int, to: Int) = {
       val barsFrom = barsOf(from)
@@ -43,7 +30,7 @@ object Euler315 {
           cursor = root
           root.toLong
         }
-        .takeWhilePlusOne(_ > 10)
+        .takeWhilePlusOne(_ >= 10)
     }
 
     def totalOnOffCost(n: Long): Long = {
@@ -81,15 +68,16 @@ object Euler315 {
       sum
     }
 
-    summedSwitchCosts(201,true)
-
     val start = 10000000
-    val end = start*2
+    val end = start * 2
 
-    val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end).toList
-    val solution = primes.map { prime =>
-      summedSwitchCosts(prime, false) - summedSwitchCosts(prime, true)
-    }.sum
+    val solution = measured {
+      val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end).toList
+      val solution = primes.map { prime =>
+        summedSwitchCosts(prime, false) - summedSwitchCosts(prime, true)
+      }.sum
+      solution
+    }
     println(solution)
   }
 }
