@@ -13,15 +13,21 @@ object Euler315 {
       List(1, 4, 5, 7),
       List(1, 2, 3, 4, 5, 6, 7),
       List(1, 2, 3, 4, 5, 7)
-    )
+    ).map { barIds =>
+      var bits=0
+      barIds.foreach { digit =>
+        bits |= 1<<digit
+      }
+      bits
+    }
 
     def barsOf(n: Int) = activeBars(n)
     def digitSwitchCost(from: Int, to: Int) = {
       val barsFrom = barsOf(from)
       val barsTo = barsOf(to)
-      barsFrom.diff(barsTo).size + barsTo.diff(barsFrom).size
+      Integer.bitCount(barsFrom ^ barsTo)
     }
-    def onOffCost(n: Int): Int = barsOf(n).size
+    def onOffCost(n: Int): Int = Integer.bitCount(barsOf(n))
     def digitalRoots(start: Long): Iterator[Long] = {
       var cursor = start
       Iterator.single(start) ++ Iterator
