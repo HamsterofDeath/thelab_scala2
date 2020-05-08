@@ -13,28 +13,21 @@ object Euler315 {
       List(1, 4, 5, 7),
       List(1, 2, 3, 4, 5, 6, 7),
       List(1, 2, 3, 4, 5, 7)
-    )
-
-    0 to 9 foreach { n =>
-      val active = activeBars(n)
-      def charOrNot(position:Int) = if (active.contains(position)) "X" else " "
-      val debug = s"""
-         |${charOrNot(1)}${charOrNot(1)}${charOrNot(1)}
-         |${charOrNot(4)} ${charOrNot(5)}
-         |${charOrNot(2)}${charOrNot(2)}${charOrNot(2)}
-         |${charOrNot(6)} ${charOrNot(7)}
-         |${charOrNot(3)}${charOrNot(3)}${charOrNot(3)}
-         |""".stripMargin
-      println(debug)
+    ).map { barIds =>
+      var bits=0
+      barIds.foreach { digit =>
+        bits |= 1<<digit
+      }
+      bits
     }
 
     def barsOf(n: Int) = activeBars(n)
     def digitSwitchCost(from: Int, to: Int) = {
       val barsFrom = barsOf(from)
       val barsTo = barsOf(to)
-      barsFrom.diff(barsTo).size + barsTo.diff(barsFrom).size
+      Integer.bitCount(barsFrom ^ barsTo)
     }
-    def onOffCost(n: Int): Int = barsOf(n).size
+    def onOffCost(n: Int): Int = Integer.bitCount(barsOf(n))
     def digitalRoots(start: Long): Iterator[Long] = {
       var cursor = start
       Iterator.single(start) ++ Iterator
@@ -43,7 +36,7 @@ object Euler315 {
           cursor = root
           root.toLong
         }
-        .takeWhilePlusOne(_ > 10)
+        .takeWhilePlusOne(_ >= 10)
     }
 
     def totalOnOffCost(n: Long): Long = {
@@ -70,26 +63,29 @@ object Euler315 {
 
     def summedSwitchCosts(start: Long, optimized: Boolean) = {
       var sum = totalOnOffCost(start)
-      val allDigitalRoots = digitalRoots(start).toList
+      val allDigitalRoots = digitalRoots(start)
+      var last = -1L
       allDigitalRoots.sliding(2).foreach { seq =>
         val addCost =
           if (optimized) totalSwitchCostOptimized(seq.head, seq.last)
           else totalSwitchCost(seq.head, seq.last)
         sum += addCost
+        last = seq.last
       }
-      sum += totalOnOffCost(allDigitalRoots.last)
+      sum += totalOnOffCost(last)
       sum
     }
 
-    summedSwitchCosts(201,true)
-
     val start = 10000000
-    val end = start*2
+    val end = start * 2
 
-    val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end).toList
-    val solution = primes.map { prime =>
-      summedSwitchCosts(prime, false) - summedSwitchCosts(prime, true)
-    }.sum
+    val solution = measured {
+      val primes = allPrimesLong.dropWhile(_ < start).takeWhile(_ <= end)
+      val solution = primes.map { prime =>
+        summedSwitchCosts(prime, false) - summedSwitchCosts(prime, true)
+      }.sum
+      solution
+    }
     println(solution)
   }
 }
