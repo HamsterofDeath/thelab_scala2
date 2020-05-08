@@ -16,4 +16,13 @@ public class Ding {
         System.out.println(guessed.contains("@"));
         System.out.println(guessed.contains("T"));
     }
+
+    private static boolean isItANumber(String maybeNumber) {
+        try {
+            Integer.parseInt(maybeNumber);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
