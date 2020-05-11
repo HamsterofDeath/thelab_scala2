@@ -12,37 +12,43 @@ object Euler393 {
       case class Move(from: Position, to: Position)
 
       def toString(moves: List[Move]) = {
-        val filled = AnsiColor.BLACK_B + " " + AnsiColor.RESET
-        val empty = " "
-        def cell(direction: Char) =
-          s"""|$empty$empty$empty
-             |$empty$direction$empty
-             |$empty$empty$empty""".stripMargin
-
-        val picture = Array.fill[Char](nx * 3, ny * 3)(' ')
-        moves.foreach { move =>
+        val picture = Array.fill[String](nx, ny)(" ")
+        var previousMove = moves.head
+        val colors = Iterator
+          .continually(
+            List(
+              AnsiColor.BLUE,
+              AnsiColor.GREEN,
+              AnsiColor.RED,
+              AnsiColor.YELLOW
+            )
+          )
+          .flatten
+        var colorToUse = colors.next()
+        moves.reverse.foreach { move =>
+          if (previousMove != move && previousMove.to != move.from) {
+            colorToUse = colors.next()
+          }
           val xDiff = move.to.x - move.from.x
           val yDiff = move.to.y - move.from.y
-          if (xDiff.abs + yDiff.abs ==1) {
-            val insert   = (xDiff, yDiff) match {
+          if (xDiff.abs + yDiff.abs == 1) {
+            val insert = (xDiff, yDiff) match {
               case (-1, 0) => '←'
-              case (0, 1) => '↑'
-              case (1, 0) => '→'
+              case (0, 1)  => '↑'
+              case (1, 0)  => '→'
               case (0, -1) => '↓'
+              case _       => throw new RuntimeException
             }
-            val insertMe = cell(insert).linesIterator.toList
-            0 to 2 foreach { x =>
-              0 to 2 foreach { y =>
-                picture(move.from.y * 3 + y)(move.from.x * 3 + x) = insertMe(y)(x)
-              }
+            val insertMe = insert
+            val sourceChar = insertMe
+            picture(move.from.y)(move.from.x) = {
+              s"${colorToUse}${sourceChar}${AnsiColor.RESET}"
             }
           }
+          previousMove = move
         }
 
-        (picture.map(_.mkString).reverse.mkString("\n") + "\n-\n").flatMap {
-          case ' '   => filled
-          case arrow => arrow.toString
-        }
+        (picture.map(_.mkString).reverse.mkString("\n") + "\n-\n")
       }
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
@@ -84,7 +90,7 @@ object Euler393 {
                         antsLeft: Int,
                         debug: List[Move]): Int = {
         if (antsLeft == 0) {
-        //  println(toString(debug))
+          println(toString(debug))
           1
         } else {
           val moves = adjacent(start)
