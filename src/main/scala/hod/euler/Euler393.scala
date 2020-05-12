@@ -106,9 +106,9 @@ object Euler393 {
           1L
         } else if (canCacheOnThisLevel && cacheEnabled) {
           val shape = {
-            var area = List.empty[Position]
+            val area = mutable.Set.empty[Position]
             def floodFill(current: Position): Unit = {
-              area = current :: area
+              area += current
               adjacent(current, map.dimensions).foreach { ad =>
                 if (!map.grid(ad.x)(ad.y) && !area.contains(ad)) {
                   floodFill(ad)
@@ -252,8 +252,15 @@ object Euler393 {
       //solutions
     }
 
-    val solution = measured {
-      countValidSetups(8, 8)
+    measured {
+      2 to 6 foreach { x =>
+        2 to 6 foreach { y =>
+          countValidSetups(x,y)
+        }
+      }
+    }
+    val solution =  {
+      countValidSetups(6, 6)
     }
     println(solution)
     println(cacheHits)
