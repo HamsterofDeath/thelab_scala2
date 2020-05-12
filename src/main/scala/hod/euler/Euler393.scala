@@ -1,20 +1,29 @@
 package hod.euler
 
-import scala.collection.mutable
+import scala.collection.{BitSet, mutable}
 import scala.io.AnsiColor
 
 object Euler393 {
   case class Position(x: Int, y: Int)
   case class Move(from: Position, to: Position)
   case class Dimensions(x: Int, y: Int)
-  case class Shape(dimensions: Dimensions, data: Set[Position])(
-    val upLeft: Position
+  case class Shape(dimensions: Dimensions, data: BitSet)(
+    val upLeft: Position,
+    toPositition:(Int, Int) => Position
   ) {
-    def anyPosition = data.head
+
+    def allPositions = data.iterator.map { index =>
+      toPositition(index % dimensions.x, index / dimensions.x)
+
+    }
+    def anyPosition = {
+      val index = data.head
+      toPositition(index%dimensions.x, index / dimensions.x)
+    }
 
     def shapeSize: Int = data.size
 
-    def contains(x: Int, y: Int) = data.exists(e => e.x == x && e.y == y)
+    def contains(x: Int, y: Int) = data.contains(x+y*dimensions.x)
 
   }
   case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions)
@@ -106,28 +115,33 @@ object Euler393 {
           1L
         } else if (canCacheOnThisLevel && cacheEnabled) {
           val shape = {
-            val area = mutable.Set.empty[Position]
+            val area = mutable.BitSet.empty
+
+            def posToIndex(p: Position) = p.x + p.y * map.dimensions.x
+            var minX,minY = Integer.MAX_VALUE
+            var maxX,maxY = Integer.MIN_VALUE
             def floodFill(current: Position): Unit = {
-              area += current
+              area += posToIndex(current)
+              minX = minX min current.x
+              minY = minY min current.y
+              maxX = maxX max current.x
+              maxY = maxY max current.y
               adjacent(current, map.dimensions).foreach { ad =>
-                if (!map.grid(ad.x)(ad.y) && !area.contains(ad)) {
+                if (!map.grid(ad.x)(ad.y) && !area.contains(posToIndex(ad))) {
                   floodFill(ad)
                 }
               }
             }
             floodFill(start)
-            val minX = area.iterator.map(_.x).min
-            val minY = area.iterator.map(_.y).min
-            val maxX = area.iterator.map(_.x).max
-            val maxY = area.iterator.map(_.y).max
+            val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
 
-            val locations = area.iterator.map { loc =>
+            val locations = area.map { index =>
+              val loc = positions(index % map.dimensions.x)(index / map.dimensions.x)
               val relativeX = loc.x - minX
               val relativeY = loc.y - minY
-              positions(relativeX)(relativeY)
-            }.toSet
-            val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
-            Shape(size, locations)(positions(minX)(minY))
+              relativeX + relativeY*size.x
+            }
+            Shape(size, locations)(positions(minX)(minY),(x,y)=> positions(x)(y))
           }
 
           cacheHits += 1
@@ -161,7 +175,7 @@ object Euler393 {
               }
             })
 
-          shape.data.foreach { loc =>
+          shape.allPositions.foreach { loc =>
             map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = true
           }
 
@@ -183,7 +197,7 @@ object Euler393 {
               intermediateSum
             }
           }
-          shape.data.foreach { loc =>
+          shape.allPositions.foreach { loc =>
             map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = false
           }
           ret
@@ -252,15 +266,10 @@ object Euler393 {
       //solutions
     }
 
-    measured {
-      2 to 6 foreach { x =>
-        2 to 6 foreach { y =>
-          countValidSetups(x,y)
-        }
-      }
-    }
     val solution =  {
-      countValidSetups(6, 6)
+      measured {
+        countValidSetups(6, 6)
+      }
     }
     println(solution)
     println(cacheHits)
