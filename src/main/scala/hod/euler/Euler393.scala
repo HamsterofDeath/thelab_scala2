@@ -1,16 +1,23 @@
 package hod.euler
 
-import scala.collection.immutable.BitSet
 import scala.collection.mutable
 import scala.io.AnsiColor
-
-import hod.stuff.boardgames.logic.Move
 
 object Euler393 {
   case class Position(x: Int, y: Int)
   case class Move(from: Position, to: Position)
   case class Dimensions(x: Int, y: Int)
-  case class Shape(data: Set[Position])
+  case class Shape(dimensions: Dimensions, data: Set[Position])(
+    val upLeft: Position
+  ) {
+    def anyPosition = data.head
+
+    def shapeSize: Int = data.size
+
+    def contains(x: Int, y: Int) = data.exists(e => e.x == x && e.y == y)
+
+  }
+  case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions)
 
   def toString(moves: List[Move]) = {
     val nx = moves.flatMap(e => List(e.from.x, e.to.x)).max + 1
@@ -52,24 +59,25 @@ object Euler393 {
   def main(args: Array[String]): Unit = {
 
     val pathCountCache = mutable.HashMap.empty[Shape, Long]
+    var cacheHits = 0
     def countValidSetups(nx: Int, ny: Int): Long = {
       //var solutions = List.empty[List[Move]]
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
 
       def posAt(x: Int, y: Int) = positions(x)(y)
-      def adjacent(pos: Position) = {
+      def adjacent(pos: Position, dimensions: Dimensions) = {
         var valid = List.empty[Position]
         if (pos.x > 0) {
           valid = posAt(pos.x - 1, pos.y) :: valid
         }
-        if (pos.x < nx - 1) {
+        if (pos.x < dimensions.x - 1) {
           valid = posAt(pos.x + 1, pos.y) :: valid
         }
         if (pos.y > 0) {
           valid = posAt(pos.x, pos.y - 1) :: valid
         }
-        if (pos.y < ny - 1) {
+        if (pos.y < dimensions.y - 1) {
           valid = posAt(pos.x, pos.y + 1) :: valid
         }
         valid
@@ -77,40 +85,121 @@ object Euler393 {
 
       val taken = Array.fill[Boolean](nx, ny)(false)
 
-      def anyUnprocessedPosition: Position = {
-        0 until nx foreach { x =>
-          0 until ny foreach { y =>
-            if (!taken(x)(y))
-              return posAt(x, y)
-          }
-        }
-        throw new IllegalStateException()
-      }
-
       var antChainStart = posAt(0, 0)
-
+      val cacheEnabled = true
       def countSubMoves(start: Position,
                         previous: Position,
                         antsLeft: Int,
-                        cacheOnThisLevel:Boolean,
-                        debug: List[Move]): Long = {
+                        canCacheOnThisLevel: Boolean,
+                        map: MapData): Long = {
+        def anyUnprocessedPosition: Position = {
+          map.grid.indices foreach { x =>
+            map.grid(x).indices foreach { y =>
+              if (!map.grid(x)(y))
+                return posAt(x, y)
+            }
+          }
+          throw new IllegalStateException()
+        }
+
         if (antsLeft == 0) {
-          //println(toString(debug))
-          //solutions = debug :: solutions
           1L
+        } else if (canCacheOnThisLevel && cacheEnabled) {
+          val shape = {
+            var area = List.empty[Position]
+            def floodFill(current: Position): Unit = {
+              area = current :: area
+              adjacent(current, map.dimensions).foreach { ad =>
+                if (!map.grid(ad.x)(ad.y) && !area.contains(ad)) {
+                  floodFill(ad)
+                }
+              }
+            }
+            floodFill(start)
+            val minX = area.iterator.map(_.x).min
+            val minY = area.iterator.map(_.y).min
+            val maxX = area.iterator.map(_.x).max
+            val maxY = area.iterator.map(_.y).max
+
+            val locations = area.iterator.map { loc =>
+              val relativeX = loc.x - minX
+              val relativeY = loc.y - minY
+              positions(relativeX)(relativeY)
+            }.toSet
+            val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
+            Shape(size, locations)(positions(minX)(minY))
+          }
+
+          cacheHits += 1
+
+          val intermediateSum =
+            pathCountCache.getOrElseUpdate(shape, {
+              cacheHits -= 1
+              if (shape.dimensions.x > 1 && shape.dimensions.y > 1) {
+                val miniMap = {
+                  MapData(
+                    Array.tabulate(shape.dimensions.x, shape.dimensions.y)(
+                      (x, y) => !shape.contains(x, y)
+                    ),
+                    shape.dimensions
+                  )
+                }
+                val startAt = shape.anyPosition
+                val originalChainStart = antChainStart
+                antChainStart = startAt
+                val subSum = countSubMoves(
+                  startAt,
+                  startAt,
+                  shape.shapeSize,
+                  false,
+                  miniMap
+                )
+                antChainStart = originalChainStart
+                subSum
+              } else {
+                0
+              }
+            })
+
+          shape.data.foreach { loc =>
+            map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = true
+          }
+
+          val ret = {
+            if (antsLeft - shape.shapeSize > 0) {
+              if (intermediateSum > 0) {
+                val nextStart = anyUnprocessedPosition
+                intermediateSum * countSubMoves(
+                  nextStart,
+                  nextStart,
+                  antsLeft - shape.shapeSize,
+                  true,
+                  map
+                )
+              } else {
+                0
+              }
+            } else {
+              intermediateSum
+            }
+          }
+          shape.data.foreach { loc =>
+            map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = false
+          }
+          ret
         } else {
 
           def evalOptions = {
-            val moves = adjacent(start)
+            val moves = adjacent(start, map.dimensions)
               .filter { p =>
-                p != previous && !taken(p.x)(p.y)
+                p != previous && !map.grid(p.x)(p.y)
               }
 
             moves.map { nextPosition =>
-              taken(nextPosition.x)(nextPosition.y) = true
+              map.grid(nextPosition.x)(nextPosition.y) = true
               val isChainComplete = nextPosition == antChainStart
               val antsLeftAfterThis = antsLeft - 1
-              val validSetups =
+              val validSetups = {
                 if (isChainComplete) {
                   if (antsLeftAfterThis > 0) {
                     val originalChainStart = antChainStart
@@ -119,8 +208,8 @@ object Euler393 {
                       antChainStart,
                       antChainStart,
                       antsLeftAfterThis,
-                      true,
-                      Move(start, originalChainStart) :: debug
+                      cacheEnabled,
+                      map
                     )
                     antChainStart = originalChainStart
                     subSum
@@ -130,7 +219,7 @@ object Euler393 {
                       antChainStart,
                       antsLeftAfterThis,
                       false,
-                      Move(start, antChainStart) :: debug
+                      map
                     )
                   }
                 } else {
@@ -139,52 +228,35 @@ object Euler393 {
                     start,
                     antsLeftAfterThis,
                     false,
-                    Move(start, nextPosition) :: debug
+                    map
                   )
                 }
+              }
 
-              taken(nextPosition.x)(nextPosition.y) = false
+              map.grid(nextPosition.x)(nextPosition.y) = false
               validSetups
             }.sum
           }
 
-          if (cacheOnThisLevel) {
-            def evalShape = {
-              var area = List.empty[Position]
-              def floodFill(current: Position): Unit = {
-                area = current :: area
-                adjacent(current).foreach { ad =>
-                  if (!taken(ad.x)(ad.y) && !area.contains(ad)) {
-                    floodFill(ad)
-                  }
-                }
-              }
-              floodFill(start)
-              val minX = area.iterator.map(_.x).min
-              val minY = area.iterator.map(_.y).min
-
-              val locations = area.iterator.map { loc =>
-                val relativeX = loc.x - minX
-                val relativeY = loc.y - minY
-                positions(relativeX)(relativeY)
-              }.toSet
-              Shape(locations)
-            }
-
-            pathCountCache.getOrElseUpdate(evalShape, evalOptions)
-          } else {
-            evalOptions
-          }
+          evalOptions
 
         }
       }
-      countSubMoves(antChainStart, antChainStart, nx * ny, false, Nil)
+      countSubMoves(
+        antChainStart,
+        antChainStart,
+        nx * ny,
+        true,
+        MapData(taken, Dimensions(nx, ny))
+      )
       //solutions
     }
 
     val solution = measured {
-      countValidSetups(6, 6)
+      countValidSetups(8, 8)
     }
     println(solution)
+    println(cacheHits)
+    println(pathCountCache.size)
   }
 }
