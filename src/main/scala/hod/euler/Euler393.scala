@@ -70,7 +70,6 @@ object Euler393 {
     val pathCountCache = mutable.HashMap.empty[Shape, Long]
     var cacheHits = 0
     def countValidSetups(nx: Int, ny: Int): Long = {
-      //var solutions = List.empty[List[Move]]
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
 
@@ -94,10 +93,10 @@ object Euler393 {
 
       val taken = Array.fill[Boolean](nx, ny)(false)
 
-      var antChainStart = posAt(0, 0)
       val cacheEnabled = true
-      def countSubMoves(start: Position,
+      def countSubMoves(current: Position,
                         previous: Position,
+                        chainStart:Position,
                         antsLeft: Int,
                         canCacheOnThisLevel: Boolean,
                         map: MapData): Long = {
@@ -132,7 +131,7 @@ object Euler393 {
                 }
               }
             }
-            floodFill(start)
+            floodFill(current)
             val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
 
             val locations = area.map { index =>
@@ -164,16 +163,14 @@ object Euler393 {
                     )
                   }
                   val startAt = shape.anyPosition
-                  val originalChainStart = antChainStart
-                  antChainStart = startAt
                   val subSum = countSubMoves(
                     startAt,
                     startAt,
+                    shape.anyPosition,
                     shape.shapeSize,
                     false,
                     miniMap
                   )
-                  antChainStart = originalChainStart
                   subSum
                 } else {
                   0
@@ -192,6 +189,7 @@ object Euler393 {
                 intermediateSum * countSubMoves(
                   nextStart,
                   nextStart,
+                  chainStart,
                   antsLeft - shape.shapeSize,
                   true,
                   map
@@ -210,33 +208,33 @@ object Euler393 {
         } else {
 
           def evalOptions = {
-            val moves = adjacent(start, map.dimensions)
+            val moves = adjacent(current, map.dimensions)
               .filter { p =>
                 p != previous && !map.grid(p.x)(p.y)
               }
 
             moves.map { nextPosition =>
               map.grid(nextPosition.x)(nextPosition.y) = true
-              val isChainComplete = nextPosition == antChainStart
+              val isChainComplete = nextPosition == chainStart
               val antsLeftAfterThis = antsLeft - 1
               val validSetups = {
                 if (isChainComplete) {
                   if (antsLeftAfterThis > 0) {
-                    val originalChainStart = antChainStart
-                    antChainStart = anyUnprocessedPosition
+                    val nextStart = anyUnprocessedPosition
                     val subSum = countSubMoves(
-                      antChainStart,
-                      antChainStart,
+                      nextStart,
+                      nextStart,
+                      nextStart,
                       antsLeftAfterThis,
                       cacheEnabled,
                       map
                     )
-                    antChainStart = originalChainStart
                     subSum
                   } else {
                     countSubMoves(
-                      antChainStart,
-                      antChainStart,
+                      chainStart,
+                      chainStart,
+                      chainStart,
                       antsLeftAfterThis,
                       false,
                       map
@@ -245,7 +243,8 @@ object Euler393 {
                 } else {
                   countSubMoves(
                     nextPosition,
-                    start,
+                    current,
+                    chainStart,
                     antsLeftAfterThis,
                     false,
                     map
@@ -262,14 +261,16 @@ object Euler393 {
 
         }
       }
+
+      val defaultStart = positions(0)(0)
       countSubMoves(
-        antChainStart,
-        antChainStart,
+        defaultStart,
+        defaultStart,
+        defaultStart,
         nx * ny,
         true,
         MapData(taken, Dimensions(nx, ny))
       )
-      //solutions
     }
 
     val solution =
