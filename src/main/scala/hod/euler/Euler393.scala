@@ -165,7 +165,11 @@ object Euler393 {
             pathCountCache.getOrElseUpdate(
               shape, {
                 cacheHits -= 1
-                if (shape.dimensions.x > 1 && shape.dimensions.y > 1) {
+                val needsEvaluation = {
+                  shape.dimensions.x > 1 &&
+                  shape.dimensions.y > 1
+                }
+                if (needsEvaluation) {
                   val miniMap = {
                     MapData(
                       Array.tabulate(shape.dimensions.x, shape.dimensions.y)(
