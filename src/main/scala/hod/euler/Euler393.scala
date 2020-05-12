@@ -28,11 +28,13 @@ object Euler393 {
   }
   case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions) {
     override def toString = {
-      (0 until dimensions.y).map { y =>
-        (0 until dimensions.x).map { x =>
-          if (grid(x)(dimensions.y-y-1)) "X" else "+"
-        }.mkString
-      }.mkString("\n")
+      (0 until dimensions.y)
+        .map { y =>
+          (0 until dimensions.x).map { x =>
+            if (grid(x)(dimensions.y - y - 1)) "X" else "+"
+          }.mkString
+        }
+        .mkString("\n")
     }
   }
 
@@ -254,11 +256,13 @@ object Euler393 {
                 val invalid = {
                   cutEnabled &&
                   current != nextPosition &&
-                  adjacent(current, map.dimensions).exists { check =>
-                    if (map.grid(check.x)(check.y) || check == chainStart) {
+                  adjacent(current, map.dimensions).exists { checkIfLockedIn =>
+                    if (checkIfLockedIn == chainStart) {
+                      nextPosition == chainStart
+                    } else if (map.grid(checkIfLockedIn.x)(checkIfLockedIn.y)) {
                       false
                     } else {
-                      val next = adjacent(check, map.dimensions)
+                      val next = adjacent(checkIfLockedIn, map.dimensions)
                       val free = next.count { adad =>
                         !map.grid(adad.x)(adad.y)
                       }
@@ -301,7 +305,7 @@ object Euler393 {
 
     val solution =
       measured {
-        countValidSetups(8, 8)
+        countValidSetups(6, 6)
       }
     println(s"Solution: $solution")
     println(s"Cuts: $cutOff")
