@@ -9,7 +9,7 @@ object Euler393 {
   case class Dimensions(x: Int, y: Int)
   case class Shape(dimensions: Dimensions, data: BitSet)(
     val upLeft: Position,
-    toPositition:(Int, Int) => Position
+    toPositition: (Int, Int) => Position
   ) {
 
     def allPositions = data.iterator.map { index =>
@@ -18,12 +18,12 @@ object Euler393 {
     }
     def anyPosition = {
       val index = data.head
-      toPositition(index%dimensions.x, index / dimensions.x)
+      toPositition(index % dimensions.x, index / dimensions.x)
     }
 
     def shapeSize: Int = data.size
 
-    def contains(x: Int, y: Int) = data.contains(x+y*dimensions.x)
+    def contains(x: Int, y: Int) = data.contains(x + y * dimensions.x)
 
   }
   case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions)
@@ -118,8 +118,8 @@ object Euler393 {
             val area = mutable.BitSet.empty
 
             def posToIndex(p: Position) = p.x + p.y * map.dimensions.x
-            var minX,minY = Integer.MAX_VALUE
-            var maxX,maxY = Integer.MIN_VALUE
+            var minX, minY = Integer.MAX_VALUE
+            var maxX, maxY = Integer.MIN_VALUE
             def floodFill(current: Position): Unit = {
               area += posToIndex(current)
               minX = minX min current.x
@@ -136,44 +136,50 @@ object Euler393 {
             val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
 
             val locations = area.map { index =>
-              val loc = positions(index % map.dimensions.x)(index / map.dimensions.x)
+              val loc =
+                positions(index % map.dimensions.x)(index / map.dimensions.x)
               val relativeX = loc.x - minX
               val relativeY = loc.y - minY
-              relativeX + relativeY*size.x
+              relativeX + relativeY * size.x
             }
-            Shape(size, locations)(positions(minX)(minY),(x,y)=> positions(x)(y))
+            Shape(size, locations)(
+              positions(minX)(minY),
+              (x, y) => positions(x)(y)
+            )
           }
 
           cacheHits += 1
 
           val intermediateSum =
-            pathCountCache.getOrElseUpdate(shape, {
-              cacheHits -= 1
-              if (shape.dimensions.x > 1 && shape.dimensions.y > 1) {
-                val miniMap = {
-                  MapData(
-                    Array.tabulate(shape.dimensions.x, shape.dimensions.y)(
-                      (x, y) => !shape.contains(x, y)
-                    ),
-                    shape.dimensions
+            pathCountCache.getOrElseUpdate(
+              shape, {
+                cacheHits -= 1
+                if (shape.dimensions.x > 1 && shape.dimensions.y > 1) {
+                  val miniMap = {
+                    MapData(
+                      Array.tabulate(shape.dimensions.x, shape.dimensions.y)(
+                        (x, y) => !shape.contains(x, y)
+                      ),
+                      shape.dimensions
+                    )
+                  }
+                  val startAt = shape.anyPosition
+                  val originalChainStart = antChainStart
+                  antChainStart = startAt
+                  val subSum = countSubMoves(
+                    startAt,
+                    startAt,
+                    shape.shapeSize,
+                    false,
+                    miniMap
                   )
+                  antChainStart = originalChainStart
+                  subSum
+                } else {
+                  0
                 }
-                val startAt = shape.anyPosition
-                val originalChainStart = antChainStart
-                antChainStart = startAt
-                val subSum = countSubMoves(
-                  startAt,
-                  startAt,
-                  shape.shapeSize,
-                  false,
-                  miniMap
-                )
-                antChainStart = originalChainStart
-                subSum
-              } else {
-                0
               }
-            })
+            )
 
           shape.allPositions.foreach { loc =>
             map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = true
@@ -266,11 +272,10 @@ object Euler393 {
       //solutions
     }
 
-    val solution =  {
+    val solution =
       measured {
         countValidSetups(6, 6)
       }
-    }
     println(solution)
     println(cacheHits)
     println(pathCountCache.size)
