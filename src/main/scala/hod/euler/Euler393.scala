@@ -26,7 +26,15 @@ object Euler393 {
     def contains(x: Int, y: Int) = data.contains(x + y * dimensions.x)
 
   }
-  case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions)
+  case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions) {
+    override def toString = {
+      (0 until dimensions.y).map { y =>
+        (0 until dimensions.x).map { x =>
+          if (grid(x)(dimensions.y-y-1)) "X" else "+"
+        }.mkString
+      }.mkString("\n")
+    }
+  }
 
   def toString(moves: List[Move]) = {
     val nx = moves.flatMap(e => List(e.from.x, e.to.x)).max + 1
@@ -69,6 +77,7 @@ object Euler393 {
 
     val pathCountCache = mutable.HashMap.empty[Shape, Long]
     var cacheHits = 0
+    var cutOff = 0
     def countValidSetups(nx: Int, ny: Int): Long = {
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
@@ -94,9 +103,10 @@ object Euler393 {
       val taken = Array.fill[Boolean](nx, ny)(false)
 
       val cacheEnabled = true
+      val cutEnabled = true
       def countSubMoves(current: Position,
                         previous: Position,
-                        chainStart:Position,
+                        chainStart: Position,
                         antsLeft: Int,
                         canCacheOnThisLevel: Boolean,
                         map: MapData): Long = {
@@ -206,40 +216,59 @@ object Euler393 {
           }
           ret
         } else {
-
-          def evalOptions = {
-            val moves = adjacent(current, map.dimensions)
+          val moves = {
+            adjacent(current, map.dimensions)
               .filter { p =>
                 p != previous && !map.grid(p.x)(p.y)
               }
+          }
 
-            moves.map { nextPosition =>
-              map.grid(nextPosition.x)(nextPosition.y) = true
-              val isChainComplete = nextPosition == chainStart
-              val antsLeftAfterThis = antsLeft - 1
-              val validSetups = {
-                if (isChainComplete) {
-                  if (antsLeftAfterThis > 0) {
-                    val nextStart = anyUnprocessedPosition
-                    val subSum = countSubMoves(
-                      nextStart,
-                      nextStart,
-                      nextStart,
-                      antsLeftAfterThis,
-                      cacheEnabled,
-                      map
-                    )
-                    subSum
-                  } else {
-                    countSubMoves(
-                      chainStart,
-                      chainStart,
-                      chainStart,
-                      antsLeftAfterThis,
-                      false,
-                      map
-                    )
+          moves.map { nextPosition =>
+            map.grid(nextPosition.x)(nextPosition.y) = true
+            val isChainComplete = nextPosition == chainStart
+            val antsLeftAfterThis = antsLeft - 1
+            val validSetups = {
+              if (isChainComplete) {
+                if (antsLeftAfterThis > 0) {
+                  val nextStart = anyUnprocessedPosition
+                  val subSum = countSubMoves(
+                    nextStart,
+                    nextStart,
+                    nextStart,
+                    antsLeftAfterThis,
+                    cacheEnabled,
+                    map
+                  )
+                  subSum
+                } else {
+                  countSubMoves(
+                    chainStart,
+                    chainStart,
+                    chainStart,
+                    antsLeftAfterThis,
+                    false,
+                    map
+                  )
+                }
+              } else {
+                val invalid = {
+                  cutEnabled &&
+                  current != nextPosition &&
+                  adjacent(current, map.dimensions).exists { check =>
+                    if (map.grid(check.x)(check.y) || check == chainStart) {
+                      false
+                    } else {
+                      val next = adjacent(check, map.dimensions)
+                      val free = next.count { adad =>
+                        !map.grid(adad.x)(adad.y)
+                      }
+                      free <= 1
+                    }
                   }
+                }
+                if (invalid) {
+                  cutOff += 1
+                  0
                 } else {
                   countSubMoves(
                     nextPosition,
@@ -251,14 +280,11 @@ object Euler393 {
                   )
                 }
               }
+            }
 
-              map.grid(nextPosition.x)(nextPosition.y) = false
-              validSetups
-            }.sum
-          }
-
-          evalOptions
-
+            map.grid(nextPosition.x)(nextPosition.y) = false
+            validSetups
+          }.sum
         }
       }
 
@@ -275,10 +301,12 @@ object Euler393 {
 
     val solution =
       measured {
-        countValidSetups(6, 6)
+        countValidSetups(8, 8)
       }
-    println(solution)
-    println(cacheHits)
-    println(pathCountCache.size)
+    println(s"Solution: $solution")
+    println(s"Cuts: $cutOff")
+    println(s"Cache hits: $cacheHits")
+    println(s"Cache size: ${pathCountCache.size}")
+
   }
 }
