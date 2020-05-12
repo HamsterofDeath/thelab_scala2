@@ -78,8 +78,8 @@ object Euler393 {
   def main(args: Array[String]): Unit = {
 
     val pathCountCache = mutable.HashMap.empty[Shape, Long]
-    var cacheHits = 0
-    var cutOff = 0
+    var cacheHits = 0L
+    var cutOff = 0L
     def countValidSetups(nx: Int, ny: Int): Long = {
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
@@ -309,7 +309,7 @@ object Euler393 {
 
     val solution =
       measured {
-        countValidSetups(6, 6)
+        countValidSetups(8, 8)
       }
     println(s"Solution: $solution")
     println(s"Cuts: $cutOff")
