@@ -4,7 +4,21 @@ import scala.collection.{BitSet, mutable}
 import scala.io.AnsiColor
 
 object Euler393 {
-  case class Position(x: Int, y: Int)
+  case class Position(x: Int, y: Int) {
+    def isExactlyBetween(a: Position, b: Position): Boolean = {
+      if (a.x == b.x && a.x == x) {
+        a.y+1 == y && y +1 == b.y ||        
+        b.y+1 == y && y +1 == a.y         
+      } else if (a.x == b.x && a.x == x) {
+        a.x+1 == x && x +1 == b.x ||
+        b.x+1 == x && x +1 == a.x
+      } else {
+        false
+      }
+
+    }
+
+  }
   case class Move(from: Position, to: Position)
   case class Dimensions(x: Int, y: Int)
   case class Shape(dimensions: Dimensions, data: BitSet)(
@@ -266,7 +280,7 @@ object Euler393 {
               }
           }
 
-          moves.map { nextPosition =>
+          def countScoreOf(nextPosition:Position): Long = {
             map.setBlocked(nextPosition)
             val isChainComplete = nextPosition == chainStart
             val antsLeftAfterThis = antsLeft - 1
@@ -314,8 +328,8 @@ object Euler393 {
                   }
                   def producesUnsolveableArea = {
                     if (invalidSplitCutEnabled) {
-                      if (previous != chainStart) {
-                        val allAdjacent = map.adjacent(previous)
+                      if (current != chainStart) {
+                        val allAdjacent = map.adjacent(current)
                         val freeSurrounding = {
                           if (allAdjacent.sizeIs >= 3) {
                             allAdjacent.filter { ad =>
@@ -326,10 +340,15 @@ object Euler393 {
                           }
                         }
                         if (freeSurrounding.sizeIs == 1) {
-                          val abort = !map
-                            .determineShapeAt(freeSurrounding.head)
-                            .canBeValid
-                          abort
+                          val testMe = freeSurrounding.head
+                          if (current.isExactlyBetween(testMe, nextPosition)) {
+                            val abort = !map
+                              .determineShapeAt(testMe)
+                              .canBeValid
+                            abort
+                          } else {
+                            false
+                          }
                         } else {
                           false
                         }
@@ -370,7 +389,13 @@ object Euler393 {
 
             map.setFree(nextPosition)
             validSetups
-          }.sum
+
+          }
+          var sum = 0L
+          moves.foreach { nextPosition =>
+            sum += countScoreOf(nextPosition)
+          }
+          sum
         }
       }
 
@@ -387,7 +412,7 @@ object Euler393 {
 
     val solution =
       measured {
-        countValidSetups(6, 6)
+        countValidSetups(6, 8)
       }
     println(s"Solution: $solution")
     println(s"Cuts (dead end): $deadEndCuts")
