@@ -11,6 +11,9 @@ object Euler393 {
     val upLeft: Position,
     toPositition: (Int, Int) => Position
   ) {
+    def canBeValid = {
+      data.size % 2 == 0
+    }
 
     def allPositions = data.iterator.map { index =>
       toPositition(index % dimensions.x, index / dimensions.x)
@@ -26,7 +29,82 @@ object Euler393 {
     def contains(x: Int, y: Int) = data.contains(x + y * dimensions.x)
 
   }
-  case class MapData(grid: Array[Array[Boolean]], dimensions: Dimensions) {
+
+  case class MapData(private val grid: Array[Array[Boolean]],
+                     private val positions: Array[Array[Position]],
+                     dimensions: Dimensions) {
+    def adjacent(pos: Position) = {
+      var valid = List.empty[Position]
+      if (pos.x > 0) {
+        valid = positions(pos.x - 1)(pos.y) :: valid
+      }
+      if (pos.x < dimensions.x - 1) {
+        valid = positions(pos.x + 1)(pos.y) :: valid
+      }
+      if (pos.y > 0) {
+        valid = positions(pos.x)(pos.y - 1) :: valid
+      }
+      if (pos.y < dimensions.y - 1) {
+        valid = positions(pos.x)(pos.y + 1) :: valid
+      }
+      valid
+    }
+
+    def determineShapeAt(current: Position): Shape = {
+      val area = mutable.BitSet.empty
+
+      def posToIndex(p: Position) = p.x + p.y * dimensions.x
+      var minX, minY = Integer.MAX_VALUE
+      var maxX, maxY = Integer.MIN_VALUE
+      def floodFill(current: Position): Unit = {
+        area += posToIndex(current)
+        minX = minX min current.x
+        minY = minY min current.y
+        maxX = maxX max current.x
+        maxY = maxY max current.y
+        adjacent(current).foreach { ad =>
+          if (isFree(ad) && !area.contains(posToIndex(ad))) {
+            floodFill(ad)
+          }
+        }
+      }
+      floodFill(current)
+      val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
+
+      val locations = area.map { index =>
+        val loc =
+          positions(index % dimensions.x)(index / dimensions.x)
+        val relativeX = loc.x - minX
+        val relativeY = loc.y - minY
+        relativeX + relativeY * size.x
+      }
+      Shape(size, locations)(positions(minX)(minY), (x, y) => positions(x)(y))
+
+    }
+
+    def setBlocked(x: Int, y: Int): Unit = {
+      grid(x)(y) = true
+    }
+    def setBlocked(pos: Position): Unit = {
+      grid(pos.x)(pos.y) = true
+    }
+    def setFree(x: Int, y: Int): Unit = {
+      grid(x)(y) = false
+    }
+    def setFree(pos: Position): Unit = {
+      grid(pos.x)(pos.y) = false
+    }
+
+    def isBlocked(pos: Position): Boolean = {
+      grid(pos.x)(pos.y)
+    }
+    def isFree(pos: Position): Boolean = {
+      !grid(pos.x)(pos.y)
+    }
+    def isFree(x: Int, y: Int): Boolean = {
+      !grid(x)(y)
+    }
+
     override def toString = {
       (0 until dimensions.y)
         .map { y =>
@@ -79,33 +157,19 @@ object Euler393 {
 
     val pathCountCache = mutable.HashMap.empty[Shape, Long]
     var cacheHits = 0L
-    var cutOff = 0L
+    var deadEndCuts = 0L
+    var splitCuts = 0L
     def countValidSetups(nx: Int, ny: Int): Long = {
 
       val positions = Array.tabulate(nx, ny)((nx, ny) => Position(nx, ny))
 
       def posAt(x: Int, y: Int) = positions(x)(y)
-      def adjacent(pos: Position, dimensions: Dimensions) = {
-        var valid = List.empty[Position]
-        if (pos.x > 0) {
-          valid = posAt(pos.x - 1, pos.y) :: valid
-        }
-        if (pos.x < dimensions.x - 1) {
-          valid = posAt(pos.x + 1, pos.y) :: valid
-        }
-        if (pos.y > 0) {
-          valid = posAt(pos.x, pos.y - 1) :: valid
-        }
-        if (pos.y < dimensions.y - 1) {
-          valid = posAt(pos.x, pos.y + 1) :: valid
-        }
-        valid
-      }
 
       val taken = Array.fill[Boolean](nx, ny)(false)
 
       val cacheEnabled = true
-      val cutEnabled = true
+      val deadEndCutEnabled = true
+      val invalidSplitCutEnabled = true
       def countSubMoves(current: Position,
                         previous: Position,
                         chainStart: Position,
@@ -113,9 +177,9 @@ object Euler393 {
                         canCacheOnThisLevel: Boolean,
                         map: MapData): Long = {
         def anyUnprocessedPosition: Position = {
-          map.grid.indices foreach { x =>
-            map.grid(x).indices foreach { y =>
-              if (!map.grid(x)(y))
+          0 until map.dimensions.x foreach { x =>
+            0 until map.dimensions.y foreach { y =>
+              if (map.isFree(x, y))
                 return posAt(x, y)
             }
           }
@@ -126,42 +190,12 @@ object Euler393 {
           1L
         } else if (canCacheOnThisLevel && cacheEnabled) {
           val shape = {
-            val area = mutable.BitSet.empty
-
-            def posToIndex(p: Position) = p.x + p.y * map.dimensions.x
-            var minX, minY = Integer.MAX_VALUE
-            var maxX, maxY = Integer.MIN_VALUE
-            def floodFill(current: Position): Unit = {
-              area += posToIndex(current)
-              minX = minX min current.x
-              minY = minY min current.y
-              maxX = maxX max current.x
-              maxY = maxY max current.y
-              adjacent(current, map.dimensions).foreach { ad =>
-                if (!map.grid(ad.x)(ad.y) && !area.contains(posToIndex(ad))) {
-                  floodFill(ad)
-                }
-              }
-            }
-            floodFill(current)
-            val size = Dimensions(maxX - minX + 1, maxY - minY + 1)
-
-            val locations = area.map { index =>
-              val loc =
-                positions(index % map.dimensions.x)(index / map.dimensions.x)
-              val relativeX = loc.x - minX
-              val relativeY = loc.y - minY
-              relativeX + relativeY * size.x
-            }
-            Shape(size, locations)(
-              positions(minX)(minY),
-              (x, y) => positions(x)(y)
-            )
+            map.determineShapeAt(current)
           }
 
           cacheHits += 1
 
-          val intermediateSum =
+          val intermediateSum = {
             pathCountCache.getOrElseUpdate(
               shape, {
                 cacheHits -= 1
@@ -175,6 +209,7 @@ object Euler393 {
                       Array.tabulate(shape.dimensions.x, shape.dimensions.y)(
                         (x, y) => !shape.contains(x, y)
                       ),
+                      positions,
                       shape.dimensions
                     )
                   }
@@ -193,9 +228,10 @@ object Euler393 {
                 }
               }
             )
+          }
 
           shape.allPositions.foreach { loc =>
-            map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = true
+            map.setBlocked(loc.x + shape.upLeft.x, loc.y + shape.upLeft.y)
           }
 
           val ret = {
@@ -218,19 +254,20 @@ object Euler393 {
             }
           }
           shape.allPositions.foreach { loc =>
-            map.grid(loc.x + shape.upLeft.x)(loc.y + shape.upLeft.y) = false
+            map.setFree(loc.x + shape.upLeft.x, loc.y + shape.upLeft.y)
           }
           ret
         } else {
           val moves = {
-            adjacent(current, map.dimensions)
+            map
+              .adjacent(current)
               .filter { p =>
-                p != previous && !map.grid(p.x)(p.y)
+                p != previous && map.isFree(p)
               }
           }
 
           moves.map { nextPosition =>
-            map.grid(nextPosition.x)(nextPosition.y) = true
+            map.setBlocked(nextPosition)
             val isChainComplete = nextPosition == chainStart
             val antsLeftAfterThis = antsLeft - 1
             val validSetups = {
@@ -258,24 +295,65 @@ object Euler393 {
                 }
               } else {
                 val invalid = {
-                  cutEnabled &&
-                  current != nextPosition &&
-                  adjacent(current, map.dimensions).exists { checkIfLockedIn =>
-                    if (checkIfLockedIn == chainStart) {
-                      nextPosition == chainStart
-                    } else if (map.grid(checkIfLockedIn.x)(checkIfLockedIn.y)) {
-                      false
-                    } else {
-                      val next = adjacent(checkIfLockedIn, map.dimensions)
-                      val free = next.count { adad =>
-                        !map.grid(adad.x)(adad.y)
+                  def producesDeadEnd = {
+                    deadEndCutEnabled &&
+                    current != nextPosition &&
+                    map.adjacent(current).exists { checkIfLockedIn =>
+                      if (checkIfLockedIn == chainStart) {
+                        nextPosition == chainStart
+                      } else if (map.isBlocked(checkIfLockedIn)) {
+                        false
+                      } else {
+                        val next = map.adjacent(checkIfLockedIn)
+                        val free = next.count { adad =>
+                          map.isFree(adad)
+                        }
+                        free <= 1
                       }
-                      free <= 1
                     }
                   }
+                  def producesUnsolveableArea = {
+                    if (invalidSplitCutEnabled) {
+                      if (previous != chainStart) {
+                        val allAdjacent = map.adjacent(previous)
+                        val freeSurrounding = {
+                          if (allAdjacent.sizeIs >= 3) {
+                            allAdjacent.filter { ad =>
+                              map.isFree(ad)
+                            }
+                          } else {
+                            Nil
+                          }
+                        }
+                        if (freeSurrounding.sizeIs == 1) {
+                          val abort = !map
+                            .determineShapeAt(freeSurrounding.head)
+                            .canBeValid
+                          abort
+                        } else {
+                          false
+                        }
+                      } else {
+                        false
+                      }
+                    } else {
+                      false
+                    }
+                  }
+                  val result = {
+                    if (producesDeadEnd) {
+                      deadEndCuts += 1
+                      true
+                    } else if (producesUnsolveableArea) {
+                      splitCuts += 1
+                      true
+                    } else {
+                      false
+                    }
+                  }
+                  result
                 }
                 if (invalid) {
-                  cutOff += 1
                   0
                 } else {
                   countSubMoves(
@@ -290,7 +368,7 @@ object Euler393 {
               }
             }
 
-            map.grid(nextPosition.x)(nextPosition.y) = false
+            map.setFree(nextPosition)
             validSetups
           }.sum
         }
@@ -303,16 +381,17 @@ object Euler393 {
         defaultStart,
         nx * ny,
         true,
-        MapData(taken, Dimensions(nx, ny))
+        MapData(taken, positions, Dimensions(nx, ny))
       )
     }
 
     val solution =
       measured {
-        countValidSetups(8, 8)
+        countValidSetups(6, 6)
       }
     println(s"Solution: $solution")
-    println(s"Cuts: $cutOff")
+    println(s"Cuts (dead end): $deadEndCuts")
+    println(s"Cuts (invalid split): $splitCuts")
     println(s"Cache hits: $cacheHits")
     println(s"Cache size: ${pathCountCache.size}")
 
