@@ -129,7 +129,10 @@ object Euler393 {
       def cacheHits = cacheRequests - cacheMisses
       val subResultCache = mutable.HashMap.empty[StateKey, Long]
 
-      case class StateKey(encodedRow1: Long, encodedRow2: Long, row: Int) {
+      case class StateKey(encodedRow1: Long,
+                          encodedRow2: Long,
+                          row: Int,
+                          col: Int) {
         private def print(encoded: Long) = {
           (0 until size)
             .map { x =>
@@ -148,6 +151,26 @@ object Euler393 {
       }
 
       def nextRow(y: Int): Long = {
+        def ensureNot(x: Int, y: Int, move: Move) = {
+          if (isInField(x, y))
+            moveHistory.moveAt(x, y) != move
+          else true
+        }
+
+        def ensure(x: Int, y: Int, move: Move) = {
+          if (isInField(x, y))
+            moveHistory.moveAt(x, y) == move
+          else false
+        }
+
+        def isTarget(x: Int, y: Int) = {
+          !isInField(x, y) ||
+          ensure(x - 1, y, Right) ||
+          ensure(x + 1, y, Left) ||
+          ensure(x, y - 1, Down) ||
+          ensure(x, y + 1, Up)
+        }
+
         def nextCell(x: Int): Long = {
           if (x == size && y < size - 1) {
             nextRow(y + 1)
@@ -156,30 +179,16 @@ object Euler393 {
           } else {
             val traverseMoves = possibleMoves(x)(y)
 
-            def isTarget(x: Int, y: Int) = {
-              !isInField(x, y) ||
-              ensure(x - 1, y, Right) ||
-              ensure(x + 1, y, Left) ||
-              ensure(x, y - 1, Down) ||
-              ensure(x, y + 1, Up)
-            }
-
-            def ensureNot(x: Int, y: Int, move: Move) = {
-              if (isInField(x, y))
-                moveHistory.moveAt(x, y) != move
-              else true
-            }
-
-            def ensure(x: Int, y: Int, move: Move) = {
-              if (isInField(x, y))
-                moveHistory.moveAt(x, y) == move
-              else false
-            }
-
             def makeMove(move: Move): Long = {
               moveHistory.setMove(x, y, move)
-              moves += 1
-              val count = nextCell(x + 1)
+
+              val count = {
+                def evaluateNextStep = {
+                  moves += 1
+                  nextCell(x + 1)
+                }
+                evaluateNextStep
+              }
               moveHistory.resetMove(x, y)
               count
             }
@@ -203,22 +212,26 @@ object Euler393 {
               ensureNot(x, y - 2, Down) &&
               ensureNot(x - 1, y - 1, Right) &&
               ensureNot(x + 1, y - 1, Left) &&
+              (y + 2 != size || !ensure(x - 1, y, Down) || isTarget(x - 1, y)) &&
               !isTarget(x, y - 1)
             }
 
             def canGoDown = {
               isTarget(x, y - 1) &&
               (x < size - 1 || isTarget(x, y)) &&
-              (isTarget(x-1,y) || ensureNot(x-1,y, Down))
+              (isTarget(x - 1, y) || ensureNot(x - 1, y, Down))
             }
 
-            val subSum = Random.shuffle(traverseMoves).map {
-              case Left if canGoLeft   => makeMove(Left)
-              case Down if canGoDown   => makeMove(Down)
-              case Right if canGoRight => makeMove(Right)
-              case Up if canGoUp       => makeMove(Up)
-              case _                   => 0 // dead end
-            }.sum
+            val subSum = Random
+              .shuffle(traverseMoves)
+              .map {
+                case Left if canGoLeft   => makeMove(Left)
+                case Down if canGoDown   => makeMove(Down)
+                case Right if canGoRight => makeMove(Right)
+                case Up if canGoUp       => makeMove(Up)
+                case _                   => 0 // dead end
+              }
+              .sum
             if (subSum == 0) {
               noop()
             }
@@ -235,11 +248,12 @@ object Euler393 {
             StateKey(
               moveHistory.getEncodedRow(y - 2),
               moveHistory.getEncodedRow(y - 1),
-              y
+              y,
+              -1
             )
           }
           cacheRequests += 1
-          if (cacheRequests % 100000 == 0) {
+          if (cacheRequests % 1000000 == 0) {
             println(
               s"Cache: ${cacheHits.nice}/${cacheRequests.nice}, size ${subResultCache.size.nice}"
             )
@@ -263,8 +277,9 @@ object Euler393 {
       result
     }
 
+    //require (207408==solveFor(6))
     val solution = solveFor(8)
-    println(solution)
+    println(solution.nice)
 
   }
 }
