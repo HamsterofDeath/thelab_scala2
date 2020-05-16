@@ -222,8 +222,7 @@ object Euler393 {
               (isTarget(x - 1, y) || ensureNot(x - 1, y, Down))
             }
 
-            val subSum = Random
-              .shuffle(traverseMoves)
+            val subSum = traverseMoves // Random .shuffle(traverseMoves)
               .map {
                 case Left if canGoLeft   => makeMove(Left)
                 case Down if canGoDown   => makeMove(Down)
