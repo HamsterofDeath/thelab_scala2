@@ -3,6 +3,7 @@ package hod.euler
 import java.text.DecimalFormat
 import scala.collection.{BitSet, mutable}
 import scala.io.AnsiColor
+import scala.util.Random
 
 object Euler393 {
   def main(args: Array[String]): Unit = {
@@ -50,17 +51,17 @@ object Euler393 {
       val possibleMoves = {
         val moves = Array.tabulate[List[Move]](size, size)((x, y) => {
           var movesAtPosition = List.empty[Move]
-          if (x > 0) {
-            movesAtPosition :+= Left
-          }
-          if (x < size - 1) {
-            movesAtPosition :+= Right
-          }
           if (y > 0) {
             movesAtPosition :+= Up
           }
           if (y < size - 1) {
             movesAtPosition :+= Down
+          }
+          if (x > 0) {
+            movesAtPosition :+= Left
+          }
+          if (x < size - 1) {
+            movesAtPosition :+= Right
           }
           movesAtPosition
         })
@@ -78,6 +79,21 @@ object Euler393 {
       }
 
       class EncodedState(size: Int) {
+        def countDowns(y: Int) = {
+          countInRow(y, Down)
+        }
+
+        private def countInRow(y: Int, move: Move) = {
+          val bits = move.bitCode
+          (0 until size).count { x =>
+            bitsAt(x, y) == bits
+          }
+        }
+
+        def countUps(y: Int) = {
+          countInRow(y, Up)
+        }
+
         private val data = Array.fill[Long](size)(Undefined.bitCode)
 
         def bitsAt(x: Int, y: Int) = {
@@ -132,7 +148,6 @@ object Euler393 {
       }
 
       def nextRow(y: Int): Long = {
-
         def nextCell(x: Int): Long = {
           if (x == size && y < size - 1) {
             nextRow(y + 1)
@@ -140,6 +155,7 @@ object Euler393 {
             1
           } else {
             val traverseMoves = possibleMoves(x)(y)
+
             def isTarget(x: Int, y: Int) = {
               !isInField(x, y) ||
               ensure(x - 1, y, Right) ||
@@ -159,6 +175,7 @@ object Euler393 {
                 moveHistory.moveAt(x, y) == move
               else false
             }
+
             def makeMove(move: Move): Long = {
               moveHistory.setMove(x, y, move)
               moves += 1
@@ -177,8 +194,8 @@ object Euler393 {
             def canGoRight = {
               ensureNot(x + 1, y - 1, Down) &&
               isTarget(x, y - 1) &&
-              (y < size -1 || isTarget(x-1, y)) &&
-              (ensureNot(x-1,y,Down) || isTarget(x-1,y))
+              (y < size - 1 || isTarget(x - 1, y)) &&
+              (ensureNot(x - 1, y, Down) || isTarget(x - 1, y))
             }
 
             def canGoUp = {
@@ -191,16 +208,16 @@ object Euler393 {
 
             def canGoDown = {
               isTarget(x, y - 1) &&
-              (x < size-1 || isTarget(x,y))
+              (x < size - 1 || isTarget(x, y)) &&
+              (isTarget(x-1,y) || ensureNot(x-1,y, Down))
             }
 
-            val subSum = traverseMoves.map {
+            val subSum = Random.shuffle(traverseMoves).map {
               case Left if canGoLeft   => makeMove(Left)
+              case Down if canGoDown   => makeMove(Down)
               case Right if canGoRight => makeMove(Right)
               case Up if canGoUp       => makeMove(Up)
-              case Down if canGoDown   => makeMove(Down)
-              case _ =>
-                0
+              case _                   => 0 // dead end
             }.sum
             if (subSum == 0) {
               noop()
@@ -242,9 +259,7 @@ object Euler393 {
       println(
         s"Cache: ${cacheHits.nice}/${cacheRequests.nice}, size ${subResultCache.size.nice}"
       )
-      println(
-        s"Moves: $moves"
-      )
+      println(s"Moves: ${moves.nice}")
       result
     }
 
