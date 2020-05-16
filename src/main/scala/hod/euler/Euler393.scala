@@ -143,9 +143,6 @@ object Euler393 {
               ensure(x,y+1, Up)
             }
 
-            def uncheckedAreBitSet(x:Int,y:Int, move:Move) = {
-              moveHistory.bitsAt(x,y)==move.bitCode
-            }
             def ensureNot(x: Int, y: Int, move: Move) = {
               if (isInField(x, y))
                 moveHistory.moveAt(x,y) != move
@@ -182,7 +179,7 @@ object Euler393 {
                     ensureNot(x + 1, y - 1, Left) &&
                     !isTarget(x,y-1)=>
                 makeMove(Up)
-              case Down =>
+              case Down if isTarget(x,y-1) =>
                 makeMove(Down)
               case _ =>
                 0
