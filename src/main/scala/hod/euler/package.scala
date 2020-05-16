@@ -2,6 +2,7 @@ package hod
 
 import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream, FileReader}
 import java.math.{BigInteger, MathContext}
+import java.text.{DecimalFormat, DecimalFormatSymbols}
 import java.util.concurrent.Executors
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
@@ -278,9 +279,21 @@ package object euler {
       }
       true
     }
+
+    def nice = {
+      i.toLong.nice
+    }
+
   }
 
   implicit class LongOps(val l: Long) extends AnyVal {
+
+    def nice = {
+      val sym         = new DecimalFormatSymbols()
+      sym.setGroupingSeparator('.')
+      val df        = new DecimalFormat("###,###,###,###", sym)
+      df.format(l)
+    }
 
     def allDigitsReversed:Iterator[Int] = {
       var number = l
