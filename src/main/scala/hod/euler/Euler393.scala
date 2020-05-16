@@ -109,6 +109,7 @@ object Euler393 {
 
       var cacheRequests = 0L
       var cacheMisses = 0L
+      var moves = 0L
       def cacheHits = cacheRequests - cacheMisses
       val subResultCache = mutable.HashMap.empty[StateKey, Long]
 
@@ -160,35 +161,49 @@ object Euler393 {
             }
             def makeMove(move: Move): Long = {
               moveHistory.setMove(x, y, move)
+              moves += 1
               val count = nextCell(x + 1)
               moveHistory.resetMove(x, y)
               count
             }
+
+            def canGoLeft = {
+              ensureNot(x - 1, y, Right) &&
+              ensureNot(x - 2, y, Right) &&
+              ensureNot(x - 1, y - 1, Down) &&
+              isTarget(x, y - 1)
+            }
+
+            def canGoRight = {
+              ensureNot(x + 1, y - 1, Down) &&
+              isTarget(x, y - 1) &&
+              (y < size -1 || isTarget(x-1, y)) &&
+              (ensureNot(x-1,y,Down) || isTarget(x-1,y))
+            }
+
+            def canGoUp = {
+              ensureNot(x, y - 1, Down) &&
+              ensureNot(x, y - 2, Down) &&
+              ensureNot(x - 1, y - 1, Right) &&
+              ensureNot(x + 1, y - 1, Left) &&
+              !isTarget(x, y - 1)
+            }
+
+            def canGoDown = {
+              isTarget(x, y - 1) &&
+              (x < size-1 || isTarget(x,y))
+            }
+
             val subSum = traverseMoves.map {
-              case Left
-                  if ensureNot(x - 1, y, Right) &&
-                    ensureNot(x - 2, y, Right) &&
-                    ensureNot(x - 1, y - 1, Down) &&
-                    isTarget(x, y - 1) =>
-                makeMove(Left)
-              case Right
-                  if ensureNot(x + 1, y - 1, Down) &&
-                    isTarget(x, y - 1) =>
-                makeMove(Right)
-              case Up
-                  if ensureNot(x, y - 1, Down) &&
-                    ensureNot(x, y - 2, Down) &&
-                    ensureNot(x - 1, y - 1, Right) &&
-                    ensureNot(x + 1, y - 1, Left) &&
-                    !isTarget(x, y - 1) =>
-                makeMove(Up)
-              case Down if isTarget(x, y - 1) =>
-                makeMove(Down)
+              case Left if canGoLeft   => makeMove(Left)
+              case Right if canGoRight => makeMove(Right)
+              case Up if canGoUp       => makeMove(Up)
+              case Down if canGoDown   => makeMove(Down)
               case _ =>
                 0
             }.sum
             if (subSum == 0) {
-              //     println()
+              noop()
             }
             subSum
           }
@@ -207,6 +222,12 @@ object Euler393 {
             )
           }
           cacheRequests += 1
+          if (cacheRequests % 100000 == 0) {
+            println(
+              s"Cache: ${cacheHits.nice}/${cacheRequests.nice}, size ${subResultCache.size.nice}"
+            )
+
+          }
           val fromCache = subResultCache.getOrElseUpdate(key, {
             cacheMisses += 1
             evalFromHere
@@ -220,6 +241,9 @@ object Euler393 {
       val result = nextRow(0)
       println(
         s"Cache: ${cacheHits.nice}/${cacheRequests.nice}, size ${subResultCache.size.nice}"
+      )
+      println(
+        s"Moves: $moves"
       )
       result
     }
