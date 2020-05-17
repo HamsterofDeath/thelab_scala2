@@ -79,6 +79,27 @@ object Euler393 {
       }
 
       class EncodedState(size: Int) {
+
+        def ensureNot(x: Int, y: Int, move: Move) = {
+          if (isInside(x, y))
+            moveAt(x, y) != move
+          else true
+        }
+
+        def ensure(x: Int, y: Int, move: Move) = {
+          if (isInside(x, y))
+            moveAt(x, y) == move
+          else false
+        }
+
+        def isInside(x: Int, y: Int) = {
+          x >= 0 && x < size && y >= 0 && y < size
+        }
+
+        def isTarget(x: Int, y: Int) = {
+          !isInside(x, y) || targeted(x)(y)
+        }
+
         def countDowns(y: Int) = {
           countInRow(y, Down)
         }
@@ -95,6 +116,7 @@ object Euler393 {
         }
 
         private val data = Array.fill[Long](size)(Undefined.bitCode)
+        private val targeted = Array.fill[Boolean](size, size)(false)
 
         def bitsAt(x: Int, y: Int) = {
           (data(y) >> (x * 3)) & 7
@@ -106,9 +128,13 @@ object Euler393 {
 
         def setMove(x: Int, y: Int, move: Move) = {
           data(y) |= move.bitCode << x * 3
+          targeted(x + move.shiftX)(y + move.shiftY) = true
+
         }
         def resetMove(x: Int, y: Int) = {
+          val moveDone = moveAt(x, y)
           data(y) &= ~(7 << x * 3)
+          targeted(x + moveDone.shiftX)(y + moveDone.shiftY) = false
         }
 
         override def toString: String = {
@@ -129,10 +155,7 @@ object Euler393 {
       def cacheHits = cacheRequests - cacheMisses
       val subResultCache = mutable.HashMap.empty[StateKey, Long]
 
-      case class StateKey(encodedRow1: Long,
-                          encodedRow2: Long,
-                          row: Int,
-                          col: Int) {
+      case class StateKey(encodedRows: Long, row: Int) {
         private def print(encoded: Long) = {
           (0 until size)
             .map { x =>
@@ -142,34 +165,18 @@ object Euler393 {
             .mkString
 
         }
+
+        def encodedRow1 = encodedRows>>32
+        def encodedRow2 = encodedRows << 32 >> 32
         override def toString = {
           s"${print(encodedRow1)}\n${print(encodedRow2)}"
         }
       }
       def isInField(x: Int, y: Int) = {
-        x >= 0 && x < size && y >= 0 && y < size
+        moveHistory.isInside(x, y)
       }
 
       def nextRow(y: Int): Long = {
-        def ensureNot(x: Int, y: Int, move: Move) = {
-          if (isInField(x, y))
-            moveHistory.moveAt(x, y) != move
-          else true
-        }
-
-        def ensure(x: Int, y: Int, move: Move) = {
-          if (isInField(x, y))
-            moveHistory.moveAt(x, y) == move
-          else false
-        }
-
-        def isTarget(x: Int, y: Int) = {
-          !isInField(x, y) ||
-          ensure(x - 1, y, Right) ||
-          ensure(x + 1, y, Left) ||
-          ensure(x, y - 1, Down) ||
-          ensure(x, y + 1, Up)
-        }
 
         def nextCell(x: Int): Long = {
           if (x == size && y < size - 1) {
@@ -194,43 +201,42 @@ object Euler393 {
             }
 
             def canGoLeft = {
-              ensureNot(x - 1, y, Right) &&
-              ensureNot(x - 2, y, Right) &&
-              ensureNot(x - 1, y - 1, Down) &&
-              isTarget(x, y - 1)
+              moveHistory.ensureNot(x - 1, y, Right) &&
+              moveHistory.ensureNot(x - 2, y, Right) &&
+              moveHistory.ensureNot(x - 1, y - 1, Down) &&
+              moveHistory.isTarget(x, y - 1)
             }
 
             def canGoRight = {
-              ensureNot(x + 1, y - 1, Down) &&
-              isTarget(x, y - 1) &&
-              (y < size - 1 || isTarget(x - 1, y)) &&
-              (ensureNot(x - 1, y, Down) || isTarget(x - 1, y))
+              moveHistory.ensureNot(x + 1, y - 1, Down) &&
+              moveHistory.isTarget(x, y - 1) &&
+              (y < size - 1 || moveHistory.isTarget(x - 1, y)) &&
+              (moveHistory.ensureNot(x - 1, y, Down) || moveHistory.isTarget(x - 1, y))
             }
 
             def canGoUp = {
-              ensureNot(x, y - 1, Down) &&
-              ensureNot(x, y - 2, Down) &&
-              ensureNot(x - 1, y - 1, Right) &&
-              ensureNot(x + 1, y - 1, Left) &&
-              (y + 2 != size || !ensure(x - 1, y, Down) || isTarget(x - 1, y)) &&
-              !isTarget(x, y - 1)
+              moveHistory.ensureNot(x, y - 1, Down) &&
+              moveHistory.ensureNot(x, y - 2, Down) &&
+              moveHistory.ensureNot(x - 1, y - 1, Right) &&
+              moveHistory.ensureNot(x + 1, y - 1, Left) &&
+              (y + 2 != size || !moveHistory.ensure(x - 1, y, Down) || moveHistory.isTarget(x - 1, y)) &&
+              !moveHistory.isTarget(x, y - 1)
             }
 
             def canGoDown = {
-              isTarget(x, y - 1) &&
-              (x < size - 1 || isTarget(x, y)) &&
-              (isTarget(x - 1, y) || ensureNot(x - 1, y, Down))
+              moveHistory.isTarget(x, y - 1) &&
+              (x < size - 1 || moveHistory.isTarget(x, y)) &&
+              (moveHistory.isTarget(x - 1, y) || moveHistory.ensureNot(x - 1, y, Down))
             }
 
             val subSum = traverseMoves // Random .shuffle(traverseMoves)
-              .map {
-                case Left if canGoLeft   => makeMove(Left)
-                case Down if canGoDown   => makeMove(Down)
-                case Right if canGoRight => makeMove(Right)
-                case Up if canGoUp       => makeMove(Up)
-                case _                   => 0 // dead end
-              }
-              .sum
+            .map {
+              case Left if canGoLeft   => makeMove(Left)
+              case Down if canGoDown   => makeMove(Down)
+              case Right if canGoRight => makeMove(Right)
+              case Up if canGoUp       => makeMove(Up)
+              case _                   => 0 // dead end
+            }.sum
             if (subSum == 0) {
               noop()
             }
@@ -245,10 +251,8 @@ object Euler393 {
         if (y > 1) {
           val key = {
             StateKey(
-              moveHistory.getEncodedRow(y - 2),
-              moveHistory.getEncodedRow(y - 1),
-              y,
-              -1
+              moveHistory.getEncodedRow(y - 2)<<32 | moveHistory.getEncodedRow(y - 1),
+              y
             )
           }
           cacheRequests += 1
@@ -277,7 +281,7 @@ object Euler393 {
     }
 
     //require (207408==solveFor(6))
-    val solution = solveFor(8)
+    val solution = solveFor(10)
     println(solution.nice)
 
   }
