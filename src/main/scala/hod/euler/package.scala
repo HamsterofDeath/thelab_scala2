@@ -295,6 +295,18 @@ package object euler {
       df.format(l)
     }
 
+    def allDigits = l.toString.iterator.map(_.getNumericValue)
+
+    def pow(n:Int):Long = {
+      n match {
+        case 0 => 1
+        case _ =>
+          var ret = l
+          (1 until n).foreach(_ => ret*=l)
+          ret
+      }
+    }
+
     def allDigitsReversed:Iterator[Int] = {
       var number = l
       Iterator.continually {
