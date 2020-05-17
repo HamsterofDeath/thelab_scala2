@@ -6,47 +6,48 @@ import scala.io.AnsiColor
 import scala.util.Random
 
 object Euler393 {
+  sealed trait Move {
+    val arrow: Char
+    val bitCode: Int
+    val shiftX: Int
+    val shiftY: Int
+  }
+
+  case object Undefined extends Move {
+    override val shiftX: Int = 0
+    override val shiftY: Int = 0
+    override val bitCode: Int = 0
+    override val arrow: Char = ' '
+  }
+  case object Left extends Move {
+    override val shiftX: Int = -1
+    override val shiftY: Int = 0
+    override val bitCode: Int = 1
+    override val arrow: Char = '←'
+  }
+  case object Right extends Move {
+    override val shiftX: Int = 1
+    override val shiftY: Int = 0
+    override val bitCode: Int = 2
+    override val arrow: Char = '→'
+  }
+
+  case object Up extends Move {
+    override val shiftX: Int = 0
+    override val shiftY: Int = -1
+    override val bitCode: Int = 3
+    override val arrow: Char = '↑'
+  }
+
+  case object Down extends Move {
+    override val shiftX: Int = 0
+    override val shiftY: Int = 1
+    override val bitCode: Int = 4
+    override val arrow: Char = '↓'
+  }
+
   def main(args: Array[String]): Unit = {
     def solveFor(size: Int) = {
-      sealed trait Move {
-        val arrow: Char
-        val bitCode: Int
-        val shiftX: Int
-        val shiftY: Int
-      }
-
-      case object Undefined extends Move {
-        override val shiftX: Int = 0
-        override val shiftY: Int = 0
-        override val bitCode: Int = 0
-        override val arrow: Char = ' '
-      }
-      case object Left extends Move {
-        override val shiftX: Int = -1
-        override val shiftY: Int = 0
-        override val bitCode: Int = 1
-        override val arrow: Char = '←'
-      }
-      case object Right extends Move {
-        override val shiftX: Int = 1
-        override val shiftY: Int = 0
-        override val bitCode: Int = 2
-        override val arrow: Char = '→'
-      }
-
-      case object Up extends Move {
-        override val shiftX: Int = 0
-        override val shiftY: Int = -1
-        override val bitCode: Int = 3
-        override val arrow: Char = '↑'
-      }
-
-      case object Down extends Move {
-        override val shiftX: Int = 0
-        override val shiftY: Int = 1
-        override val bitCode: Int = 4
-        override val arrow: Char = '↓'
-      }
 
       val possibleMoves = {
         val moves = Array.tabulate[List[Move]](size, size)((x, y) => {
@@ -79,16 +80,18 @@ object Euler393 {
       }
 
       class EncodedState(size: Int) {
+        private val data = Array.fill[Long](size)(Undefined.bitCode)
+        private val targeted = Array.fill[Boolean](size, size)(false)
 
         def ensureNot(x: Int, y: Int, move: Move) = {
           if (isInside(x, y))
-            moveAt(x, y) != move
+            bitsAt(x, y) != move.bitCode
           else true
         }
 
         def ensure(x: Int, y: Int, move: Move) = {
           if (isInside(x, y))
-            moveAt(x, y) == move
+            bitsAt(x, y) == move.shiftX
           else false
         }
 
@@ -100,23 +103,12 @@ object Euler393 {
           !isInside(x, y) || targeted(x)(y)
         }
 
-        def countDowns(y: Int) = {
-          countInRow(y, Down)
-        }
-
         private def countInRow(y: Int, move: Move) = {
           val bits = move.bitCode
           (0 until size).count { x =>
             bitsAt(x, y) == bits
           }
         }
-
-        def countUps(y: Int) = {
-          countInRow(y, Up)
-        }
-
-        private val data = Array.fill[Long](size)(Undefined.bitCode)
-        private val targeted = Array.fill[Boolean](size, size)(false)
 
         def bitsAt(x: Int, y: Int) = {
           (data(y) >> (x * 3)) & 7
@@ -131,10 +123,9 @@ object Euler393 {
           targeted(x + move.shiftX)(y + move.shiftY) = true
 
         }
-        def resetMove(x: Int, y: Int) = {
-          val moveDone = moveAt(x, y)
+        def resetMove(x: Int, y: Int, move:Move) = {
           data(y) &= ~(7 << x * 3)
-          targeted(x + moveDone.shiftX)(y + moveDone.shiftY) = false
+          targeted(x + move.shiftX)(y + move.shiftY) = false
         }
 
         override def toString: String = {
@@ -196,7 +187,7 @@ object Euler393 {
                 }
                 evaluateNextStep
               }
-              moveHistory.resetMove(x, y)
+              moveHistory.resetMove(x, y, move)
               count
             }
 
@@ -281,7 +272,7 @@ object Euler393 {
     }
 
     //require (207408==solveFor(6))
-    val solution = solveFor(10)
+    val solution = solveFor(8)
     println(solution.nice)
 
   }
