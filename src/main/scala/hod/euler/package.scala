@@ -323,6 +323,10 @@ package object euler {
       BigDecimal.decimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
+    def sqrtNatural: Long = {
+      java.math.BigInteger.valueOf(l).sqrt.longValueExact()
+    }
+
     def isPerfectSquare: Boolean = {
       val n = l
       if (n < 0) {
@@ -419,6 +423,7 @@ package object euler {
   }
 
   implicit class BigIntOps(val bi: BigInt) extends AnyVal {
+
     def sqrt(scale: Int) = {
       val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal.decimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
