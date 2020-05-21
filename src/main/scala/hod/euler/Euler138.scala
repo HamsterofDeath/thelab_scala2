@@ -4,31 +4,16 @@ import scala.collection.parallel.CollectionConverters._
 
 object Euler138 {
   def main(args: Array[String]): Unit = {
-    var counter = 0L
-    val solutions = Iterator
-      .continually {
-        counter += 1
-        counter
-      }.grouped(1000000)
-      .flatMap { group =>
-        val solutions = group.par.flatMap { halfB =>
-          val twoHalves = halfB * 2
-          Iterator(-1 + twoHalves, twoHalves, 1 + twoHalves).flatMap { h =>
-            val bSqr = halfB * halfB
-            val lSqr = bSqr + h * h
-            if (lSqr.isPerfectSquare) {
-              val solution = (halfB*2, h, lSqr.sqrtNatural)
-              Some(solution)
-            } else {
-              None
-            }
-          }
-        }.seq
-        if (solutions.nonEmpty) {
-          println(solutions.mkString("\n"))
-        }
-        solutions
+    //https://oeis.org/A007805
+    def magic(n: Int): Long = {
+      n match {
+        case 0 => 1L
+        case 1 => 17L
+        case _ => 18L * magic(n - 1) - magic(n - 2)
       }
-    println(solutions.take(12).toList)
+
+    }
+    val solutions = 1 to 12 map magic
+    println(solutions.sum)
   }
 }
