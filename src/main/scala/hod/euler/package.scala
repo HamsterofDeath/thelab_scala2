@@ -424,6 +424,14 @@ package object euler {
 
   implicit class BigIntOps(val bi: BigInt) extends AnyVal {
 
+    def sqrtNatural = BigInt(bi.bigInteger.sqrt)
+
+    def isPerfectSquare = {
+      val java = bi.bigInteger
+      val sqrt = java.sqrt
+      (sqrt multiply sqrt) == java
+    }
+
     def sqrt(scale: Int) = {
       val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal.decimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
