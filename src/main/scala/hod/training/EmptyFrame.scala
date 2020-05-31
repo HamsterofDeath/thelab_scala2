@@ -1,5 +1,6 @@
 package hod.training
 
+import java.awt.event.{KeyAdapter, KeyEvent}
 import java.awt.image.BufferedImage
 import java.awt.{Color, Graphics}
 
@@ -29,11 +30,28 @@ class EmptyFrame {
     timer.start()
   }
 
+  protected var links,rechts,oben,unten = false
+
   def gefummel(): Unit = {
     hauptFenster.setUndecorated(false)
     hauptFenster.add(grafikTeil)
     grafikTeil.setSize(breite, hoehe)
     hauptFenster.setSize(breite + 20, hoehe + 40)
+    hauptFenster.addKeyListener(new KeyAdapter {
+      override def keyPressed(e: KeyEvent): Unit = {
+        links = false
+        rechts = false
+        oben = false
+        unten = false
+        e.getKeyCode match  {
+          case KeyEvent.VK_UP => oben = true
+          case KeyEvent.VK_DOWN => unten = true
+          case KeyEvent.VK_LEFT => links = true
+          case KeyEvent.VK_RIGHT => rechts = true
+          case _ =>
+        }
+      }
+    })
   }
 
   def zeichnen(g: Graphics) = {
@@ -42,9 +60,9 @@ class EmptyFrame {
 
   def spielSchleife(): Unit = {
     val g = workingImage.getGraphics
-    zeichnen(g)
     g.setColor(Color.black)
     g.fillRect(0,0, breite, hoehe)
+    zeichnen(g)
     finalImage.getGraphics.drawImage(workingImage, 5, 5, null)
     hauptFenster.repaint()
   }
