@@ -1,5 +1,8 @@
 package hod.training
 
+import java.awt.{Color, Graphics}
+import java.awt.image.BufferedImage
+
 import javax.swing.{JFrame, JPanel, Timer}
 
 class EmptyFrame {

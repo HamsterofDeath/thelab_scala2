@@ -1,4 +1,4 @@
-package hod.training.scala
+package hod.training.sscala
 
 import hod.training.EmptyFrame
 

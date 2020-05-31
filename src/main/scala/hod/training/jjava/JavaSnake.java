@@ -1,4 +1,4 @@
-package hod.training.java;
+package hod.training.jjava;
 
 import hod.training.EmptyFrame;
 
