@@ -38,11 +38,13 @@ class EmptyFrame {
     grafikTeil.setSize(breite, hoehe)
     hauptFenster.setSize(breite + 20, hoehe + 40)
     hauptFenster.addKeyListener(new KeyAdapter {
+
+      override def keyReleased(e: KeyEvent): Unit = {
+        resetControls
+      }
+
       override def keyPressed(e: KeyEvent): Unit = {
-        links = false
-        rechts = false
-        oben = false
-        unten = false
+        resetControls
         e.getKeyCode match  {
           case KeyEvent.VK_UP => oben = true
           case KeyEvent.VK_DOWN => unten = true
@@ -54,6 +56,12 @@ class EmptyFrame {
     })
   }
 
+  private def resetControls = {
+    links = false
+    rechts = false
+    oben = false
+    unten = false
+  }
   def zeichnen(g: Graphics) = {
 
   }
