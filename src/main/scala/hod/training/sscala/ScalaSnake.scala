@@ -1,10 +1,12 @@
 package hod.training.sscala
 
+import java.awt.Graphics
+
 import hod.training.EmptyFrame
 
 object ScalaSnake {
   class Spiel extends EmptyFrame {
-    override def spielSchleife(): Unit = {
+    override def zeichnen(g:Graphics): Unit = {
 
     }
   }

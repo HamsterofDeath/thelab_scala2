@@ -1,9 +1,10 @@
 package hod.training
 
-import java.awt.{Color, Graphics}
 import java.awt.image.BufferedImage
+import java.awt.{Color, Graphics}
 
 import javax.swing.{JFrame, JPanel, Timer}
+
 
 class EmptyFrame {
   private val breite = 800
@@ -35,9 +36,13 @@ class EmptyFrame {
     hauptFenster.setSize(breite + 20, hoehe + 40)
   }
 
-  def spielSchleife(): Unit = {
+  def zeichnen(g: Graphics) = {
 
+  }
+
+  def spielSchleife(): Unit = {
     val g = workingImage.getGraphics
+    zeichnen(g)
     g.setColor(Color.black)
     g.fillRect(0,0, breite, hoehe)
     finalImage.getGraphics.drawImage(workingImage, 5, 5, null)
