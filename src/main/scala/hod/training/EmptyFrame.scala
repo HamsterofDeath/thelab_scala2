@@ -40,11 +40,16 @@ class EmptyFrame {
     hauptFenster.addKeyListener(new KeyAdapter {
 
       override def keyReleased(e: KeyEvent): Unit = {
-        resetControls
+        e.getKeyCode match  {
+          case KeyEvent.VK_UP => oben = false
+          case KeyEvent.VK_DOWN => unten = false
+          case KeyEvent.VK_LEFT => links = false
+          case KeyEvent.VK_RIGHT => rechts = false
+          case _ =>
+        }
       }
 
       override def keyPressed(e: KeyEvent): Unit = {
-        resetControls
         e.getKeyCode match  {
           case KeyEvent.VK_UP => oben = true
           case KeyEvent.VK_DOWN => unten = true
