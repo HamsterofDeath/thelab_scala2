@@ -8,6 +8,9 @@ object ScalaSnake {
 
   var spielerx = 0
   var spielery = 0
+  val linksRechts = 60
+  val obenUnten = 60
+  val level = Array.fill(linksRechts, obenUnten)(0)
   class Spiel extends EmptyFrame {
     override def zeichnen(g: Graphics): Unit = {
       g.setColor(Color.GREEN)
