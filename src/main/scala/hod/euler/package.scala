@@ -124,7 +124,7 @@ package object euler {
 
   def countDivisorsOf(n:Long) = {
     var count = 0
-    val limit = math.sqrt(n).toLong
+    val limit = n / 2
     var test =1
 
     while (test <= limit) {
@@ -137,8 +137,8 @@ package object euler {
   }
 
   def divisorsOf(n:Long) = {
-    val limit = math.sqrt(n).toLong
-    Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0)
+    val limit = n / 2//math.sqrt(n).toLong
+    Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0) ++ Iterator.single(n)
   }
 
   def primeFactorsOf(n: Long): Iterator[Long] = {
