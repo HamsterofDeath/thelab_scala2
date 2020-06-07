@@ -9,6 +9,15 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 package object euler {
 
+  def iterateLongs(from:Long) = {
+    var cursor = from
+    Iterator.continually {
+      val ret = cursor
+      cursor += 1
+      ret
+    }
+  }
+
   def executionContextForThreads(threadCount: Int = Runtime.getRuntime.availableProcessors()): ExecutionContextExecutor = ExecutionContext
     .fromExecutor(Executors.newFixedThreadPool(threadCount))
 
