@@ -3,27 +3,14 @@ package hod.euler
 import scala.util.Try
 
 object Euler93 {
-  sealed trait Calculation {
-    def calculate(a: BigDecimal, b: BigDecimal): BigDecimal
-  }
-  case object Add extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = a + b
-  }
-  case object Sub extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = a - b
-  }
-  case object SubFlip extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = b - a
-  }
-  case object Mul extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = a * b
-  }
-  case object DivFlip extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = b / a
-  }
-  case object Div extends Calculation {
-    override def calculate(a: BigDecimal, b: BigDecimal): BigDecimal = a / b
-  }
+  type Calculation = (Double, Double) => Double
+  val Add: Calculation = (a,b) => a+b
+  val Mul: Calculation = (a,b) => a*b
+  val Div: Calculation = (a,b) => a/b
+  val Sub: Calculation = (a,b) => a-b
+  val DivFlip: Calculation = (a,b) => b/a
+  val SubFlip: Calculation = (a,b) => b-a
+
 
   def main(args: Array[String]): Unit = {
     val solution = measured {
@@ -70,12 +57,9 @@ object Euler93 {
                                      calc: List[Calculation]) = {
     val concreteResults = {
       Try {
-        val first = calc(0)
-          .calculate(digits(0), digits(1))
-        val second = calc(1)
-          .calculate(first, digits(2))
-        val third = calc(2)
-          .calculate(second, digits(3))
+        val first = calc(0)(digits(0), digits(1))
+        val second = calc(1)(first, digits(2))
+        val third = calc(2)(second, digits(3))
         third
       }.toOption
     }
