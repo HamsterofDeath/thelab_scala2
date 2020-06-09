@@ -14,7 +14,7 @@ object ScalaSnake {
 
   var lange = 5
 
-  val linksRechts = 600
+  val linksRechts = 800
   val obenUnten = 800
   val level = Array.fill(linksRechts, obenUnten)(0)
   class Spiel extends EmptyFrame {
