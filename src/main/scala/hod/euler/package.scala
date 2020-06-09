@@ -146,8 +146,17 @@ package object euler {
   }
 
   def divisorsOf(n:Long) = {
-    val limit = n / 2//math.sqrt(n).toLong
-    Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0) ++ Iterator.single(n)
+    properDivisorsOf(n) ++ Iterator.single(n)
+  }
+
+  def properDivisorsOf(n:Long) = {
+    n match {
+      case 1 => Iterator.empty
+      case 2 => Iterator.single(1)
+      case _ =>
+        val limit = n / 2//math.sqrt(n).toLong
+        Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0)
+    }
   }
 
   def primeFactorsOf(n: Long): Iterator[Long] = {
