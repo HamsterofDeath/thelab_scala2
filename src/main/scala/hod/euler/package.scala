@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 package object euler {
 
-  def iterateLongs(from:Long) = {
+  def iterateLongs(from: Long) = {
     var cursor = from
     Iterator.continually {
       val ret = cursor
@@ -18,8 +18,11 @@ package object euler {
     }
   }
 
-  def executionContextForThreads(threadCount: Int = Runtime.getRuntime.availableProcessors()): ExecutionContextExecutor = ExecutionContext
-    .fromExecutor(Executors.newFixedThreadPool(threadCount))
+  def executionContextForThreads(
+    threadCount: Int = Runtime.getRuntime.availableProcessors()
+  ): ExecutionContextExecutor =
+    ExecutionContext
+      .fromExecutor(Executors.newFixedThreadPool(threadCount))
 
   trait Foreach[T] {
     self =>
@@ -48,8 +51,8 @@ package object euler {
   def measured[T](t: => T) = {
     println("Operation start")
     val start = System.nanoTime()
-    val ret   = t
-    val end   = System.nanoTime()
+    val ret = t
+    val end = System.nanoTime()
     println(s"Operation took ${(end.toDouble - start) / 1000000000L} sec")
     ret
   }
@@ -120,7 +123,10 @@ package object euler {
             result = Some(middle)
           case (_, _, TargetIsEqual) =>
             result = Some(max)
-          case trip@_ => throw new RuntimeException(s"inconsistent state: $trip on $min, $middle, $max")
+          case trip @ _ =>
+            throw new RuntimeException(
+              s"inconsistent state: $trip on $min, $middle, $max"
+            )
         }
         middle
       }
@@ -131,31 +137,39 @@ package object euler {
 
   }
 
-  def countDivisorsOf(n:Long) = {
+  def countDivisorsOf(n: Long) = {
     var count = 0
     val limit = n / 2
-    var test =1
+    var test = 1
 
     while (test <= limit) {
-      if (n % test==0) {
-        count+=1
+      if (n % test == 0) {
+        count += 1
       }
-      test+=1
+      test += 1
     }
     count
   }
 
-  def divisorsOf(n:Long) = {
+  def divisorsOf(n: Long) = {
     properDivisorsOf(n) ++ Iterator.single(n)
   }
 
-  def properDivisorsOf(n:Long) = {
+  def properDivisorsOf(n: Long) = {
     n match {
-      case 0|1 => Iterator.empty
-      case 2 => Iterator.single(1)
+      case 0 | 1 => Iterator.empty
+      case 2     => Iterator.single(1L)
       case _ =>
-        val limit = n / 2//math.sqrt(n).toLong
-        Iterator.from(1).takeWhilePlusOne(_ <= limit).filter(n % _ == 0)
+        val limit = math.sqrt(n).toLong
+        var otherSide = List.empty[Long]
+        Iterator.single(1L) ++ Iterator
+          .from(2)
+          .takeWhilePlusOne(_ <= limit)
+          .filter(n % _ == 0)
+          .map { e =>
+            otherSide = n / e :: otherSide
+            e.toLong
+          } ++ otherSide.iterator
     }
   }
 
@@ -172,7 +186,7 @@ package object euler {
             prime
           }
       }
-    .takeWhilePlusOne(_ => remaining > 1)
+      .takeWhilePlusOne(_ => remaining > 1)
   }
 
   def allPrimes: Iterator[Int] = {
@@ -181,7 +195,7 @@ package object euler {
 
   implicit class FileOps(f: File) {
     def slurp = {
-      val in  = new FileReader(f)
+      val in = new FileReader(f)
       val bin = new BufferedReader(in, 4096)
       Iterator.continually(bin.readLine()).takeWhile { e =>
         val stop = e == null
@@ -206,7 +220,9 @@ package object euler {
     var maxPrimeRead = 0L
 
     val fromFile: Iterator[Long] = {
-      val in = new DataInputStream(new BufferedInputStream(new FileInputStream(cacheFile), 1024 * 1024))
+      val in = new DataInputStream(
+        new BufferedInputStream(new FileInputStream(cacheFile), 1024 * 1024)
+      )
       var row = 0
 
       def nextPrime = {
@@ -249,18 +265,19 @@ package object euler {
       }
 
       println(s"switching to calculation mode at $next")
-      Iterator.continually(returnAndAddTwo)
-      .grouped(12345)
-      .flatMap { chunk =>
-        val subSet = {
-          chunk.filter(_.isPrime)
+      Iterator
+        .continually(returnAndAddTwo)
+        .grouped(12345)
+        .flatMap { chunk =>
+          val subSet = {
+            chunk.filter(_.isPrime)
+          }
+          subSet.foreach { prime =>
+            writer.writeLong(prime)
+          }
+          writer.flush()
+          subSet
         }
-        subSet.foreach { prime =>
-          writer.writeLong(prime)
-        }
-        writer.flush()
-        subSet
-      }
     }
 
     Iterator(2L, 3L) ++ fromFile ++ calculatedRemainingPrimes
@@ -272,10 +289,10 @@ package object euler {
 
   def allSquares: Iterator[BigInt] = {
     Iterator
-    .from(1)
-    .map { e =>
-      BigInt(e) * e
-    }
+      .from(1)
+      .map { e =>
+        BigInt(e) * e
+      }
   }
 
   implicit class IterableOps[T](val i: Iterable[T]) extends AnyVal {
@@ -307,37 +324,40 @@ package object euler {
   implicit class LongOps(val l: Long) extends AnyVal {
 
     def nice = {
-      val sym         = new DecimalFormatSymbols()
+      val sym = new DecimalFormatSymbols()
       sym.setGroupingSeparator('.')
-      val df        = new DecimalFormat("###,###,###,###", sym)
+      val df = new DecimalFormat("###,###,###,###", sym)
       df.format(l)
     }
 
     def allDigits = l.toString.iterator.map(_.getNumericValue)
 
-    def pow(n:Int):Long = {
+    def pow(n: Int): Long = {
       n match {
         case 0 => 1
         case _ =>
           var ret = l
-          (1 until n).foreach(_ => ret*=l)
+          (1 until n).foreach(_ => ret *= l)
           ret
       }
     }
 
-    def allDigitsReversed:Iterator[Int] = {
+    def allDigitsReversed: Iterator[Int] = {
       var number = l
-      Iterator.continually {
-        val digit = number % 10
-        number = number / 10
-        digit.toInt
-      }.takeWhilePlusOne { _ =>
-        number > 0
-      }
+      Iterator
+        .continually {
+          val digit = number % 10
+          number = number / 10
+          digit.toInt
+        }
+        .takeWhilePlusOne { _ =>
+          number > 0
+        }
     }
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      val mc = new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
+      val mc =
+        new java.math.MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
       BigDecimal.decimal(java.math.BigDecimal.valueOf(l).sqrt(mc), mc)
     }
 
@@ -351,11 +371,12 @@ package object euler {
         false
       } else {
         (n & 0x3F).toInt match {
-          case 0x00 | 0x01 | 0x04 | 0x09 | 0x10 | 0x11 | 0x19 | 0x21 | 0x24 | 0x29 | 0x31 | 0x39 =>
+          case 0x00 | 0x01 | 0x04 | 0x09 | 0x10 | 0x11 | 0x19 | 0x21 | 0x24 |
+              0x29 | 0x31 | 0x39 =>
             var sqrt = 0L
             if (n < 410881L) { //John Carmack hack, converted to Java.
-            // See: http://www.codemaestro.com/reviews/9
-            var i = 0
+              // See: http://www.codemaestro.com/reviews/9
+              var i = 0
               var x2 = .0F
               var y = .0F
               x2 = n * 0.5F
@@ -365,8 +386,7 @@ package object euler {
               y = java.lang.Float.intBitsToFloat(i)
               y = y * (1.5F - (x2 * y * y))
               sqrt = (1.0F / y).toLong
-            }
-            else { //Carmack hack gives incorrect answer for n >= 410881.
+            } else { //Carmack hack gives incorrect answer for n >= 410881.
               sqrt = Math.sqrt(n).toLong
             }
             sqrt * sqrt == n
@@ -404,16 +424,17 @@ package object euler {
     def memoizedByIndex: Int => T = {
       val cache = mutable.HashMap.empty[Int, T]
       var maxEvaluated = -1
-      i: Int => {
-        assert(i >= 0, "int overflow")
-        while (i > maxEvaluated) {
-          val t = it.next()
-          maxEvaluated += 1
-          cache.put(maxEvaluated, t)
-          maxEvaluated
+      i: Int =>
+        {
+          assert(i >= 0, "int overflow")
+          while (i > maxEvaluated) {
+            val t = it.next()
+            maxEvaluated += 1
+            cache.put(maxEvaluated, t)
+            maxEvaluated
+          }
+          cache(i)
         }
-        cache(i)
-      }
     }
 
     def takeWhilePlusOne(filter: T => Boolean) = stopAfter(e => !filter(e))
@@ -452,7 +473,10 @@ package object euler {
 
     def sqrt(scale: Int) = {
       val mc = new MathContext(scale + 1, java.math.RoundingMode.HALF_UP)
-      BigDecimal.decimal(new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc), mc)
+      BigDecimal.decimal(
+        new java.math.BigDecimal(bi.bigInteger, mc).sqrt(mc),
+        mc
+      )
     }
 
     def toBigDecimal = {
@@ -531,8 +555,9 @@ package object euler {
     def sqrt: Double = math.sqrt(d)
 
     def sqrtPrecise(scale: Int): BigDecimal = {
-      java.math.BigDecimal.valueOf(d)
-      .sqrt(new java.math.MathContext(scale, java.math.RoundingMode.HALF_UP))
+      java.math.BigDecimal
+        .valueOf(d)
+        .sqrt(new java.math.MathContext(scale, java.math.RoundingMode.HALF_UP))
     }
 
     def isNatural: Boolean = {
@@ -547,14 +572,14 @@ package object euler {
     def openOrEval(excuse: => String): T = {
       o match {
         case Some(x) => x
-        case None => throw new RuntimeException(excuse)
+        case None    => throw new RuntimeException(excuse)
       }
     }
 
     def openOr(excuse: String): T = {
       o match {
         case Some(x) => x
-        case None => throw new RuntimeException(excuse)
+        case None    => throw new RuntimeException(excuse)
       }
     }
   }
