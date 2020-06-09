@@ -151,7 +151,7 @@ package object euler {
 
   def properDivisorsOf(n:Long) = {
     n match {
-      case 1 => Iterator.empty
+      case 0|1 => Iterator.empty
       case 2 => Iterator.single(1)
       case _ =>
         val limit = n / 2//math.sqrt(n).toLong

@@ -7,44 +7,50 @@ import scala.collection.parallel.CollectionConverters._
 
 object Euler95 {
   def main(args: Array[String]): Unit = {
-    def sumOfProperDivisors(n: Int) = properDivisorsOf(n).sum
+    val cache = mutable.HashMap.empty[Int, Int]
+    def sumOfProperDivisors(n: Int) = {
+      cache.getOrElseUpdate(n, properDivisorsOf(n).sum)
+    }
     val limit = 1000000
-
-    val seen = mutable.BitSet.empty
+    val knownChain = mutable.HashMap.empty[Int, List[Int]]
 
     def amicableChain(n: Int) = {
-      def isKnown(x: Int) = seen.synchronized {
-        seen(x)
-      }
+      def eval = {
+        val seen = mutable.BitSet.empty
 
-      if (isKnown(n)) {
-        Nil
-      } else {
-        var chain = List(n)
-        var next = sumOfProperDivisors(n)
-        while (!isKnown(next) && next <= limit) {
-          seen.synchronized {
-            seen += next
-          }
+        def isKnown(x: Int) = seen(x)
 
-          chain = next :: chain
-          next = sumOfProperDivisors(next)
-        }
-        if (next <= limit) {
-          chain.reverse
-        } else {
+        if (isKnown(n)) {
           Nil
+        } else {
+          var chain = List(n)
+          var next = sumOfProperDivisors(n)
+          while (!isKnown(next) && next <= limit) {
+            seen += next
+            chain = next :: chain
+            next = sumOfProperDivisors(next)
+          }
+          if (next <= limit && chain.head == chain.last) {
+            chain.foreach { e =>
+              knownChain += ((e, chain))
+            }
+            chain.reverse
+          } else {
+            Nil
+          }
         }
+
       }
+
+      knownChain.getOrElse(n, eval)
     }
 
     val progress = new AtomicInteger()
+    var largest = List.empty[Int]
     val solution = Iterator
       .from(1)
       .takeWhile(_ <= limit)
       .toList
-      .reverse
-      .par
       .flatMap { start =>
         val state = progress.incrementAndGet()
         if (state % 1000 == 0) {
@@ -52,6 +58,11 @@ object Euler95 {
         }
         val chain = amicableChain(start)
         if (chain.forall(_ <= limit)) {
+          if (chain.size>largest.size) {
+            println(chain.size)
+            println(chain)
+            largest = chain
+          }
           Some(chain)
         } else {
           None
