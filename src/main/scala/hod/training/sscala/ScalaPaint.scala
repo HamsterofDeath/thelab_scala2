@@ -17,7 +17,10 @@ object ScalaPaint {
       xxx=xxx+1
         1 to 100  foreach { x =>
         val farbe = if (x%2==0) Color.blue else Color.yellow
-          bild.setRGB(10+x,10+y, farbe.getRGB)
+          bild.setRGB(10+x*2,10+y*2, farbe.getRGB)
+          bild.setRGB(10+x*2+1,10+y*2, farbe.getRGB)
+          bild.setRGB(10+x*2,10+y*2+1, farbe.getRGB)
+          bild.setRGB(10+x*2+1,10+y*2+1, farbe.getRGB)
         }
       }
 
