@@ -3,12 +3,11 @@ package hod.training
 import scala.math.Ordering.BooleanOrdering
 
 object MindBender {
-  case class Implication(
-                          ifTrue: Map[String, Boolean] => Map[String, Boolean],
-                          requires: Set[String]  =Set.empty,
-                            ifFalse: Map[String, Boolean] => Map[String, Boolean] = _ => Map.empty
-                        )
-  case class Statement(id: String, implications: List[Implication])
+  case class Implication(isTrue: Map[String, Boolean] => Boolean,
+                         requiredForCheck: Set[String]) {
+    def isFalse(in: Map[String, Boolean]) = !isTrue(in)
+  }
+  case class Statement(id: String, implication: Implication)
 
   def main(args: Array[String]): Unit = {
     //Wir betrachten die folgenden Aussagen
@@ -23,116 +22,55 @@ object MindBender {
     val statements = List(
       Statement(
         "A",
-        List(
-          Implication(_ => Map("D" -> false), ifFalse = _ => Map("D" -> true,"C" -> true, "B" -> true)),
-          Implication(_ => Map("C" -> false),ifFalse = _ => Map("D" -> true,"C" -> true, "B" -> true)),
-          Implication(_ => Map("B" -> false),ifFalse = _ => Map("D" -> true,"C" -> true, "B" -> true)),
+        Implication(
+          isTrue = in => !in("D") || !in("C") || !in("B"),
+          Set("D", "C", "B")
         )
       ),
       Statement(
         "B",
-        List(
-          Implication(
-            in => if (in("D")) Map("C" -> true) else Map.empty,
-            Set("D"),
-              ifFalse = in => if (in("D")) Map("C" -> false) else Map.empty
-          )
-        )
+        Implication(in => if (in("D")) in("C") else true, Set("D", "C"))
       ),
       Statement(
         "C",
-        List(
-          Implication(
-            in =>
-              if (in("E") && in("A")) Map("F" -> true) else Map("F" -> false),
-            Set("E", "A"),
-            ifFalse = in => if (in("E") && in("A")) Map("F" -> false) else Map("F" -> true)
-          )
-        )
+        Implication(in => (in("E") && in("A")) == in("F"), Set("E", "A", "F"))
       ),
       Statement(
         "D",
-        List(
-          Implication(
-            in =>
-              if (in("E") && in("B")) Map("A" -> true)              else Map("A" -> false),
-            Set("E", "B"),
-            in =>
-              if (in("E") && in("B")) Map("A" -> false)              else Map("A" -> true),
-
-          )
-        )
+        Implication(in => (in("E") && in("B")) == in("A"), Set("E", "B", "A"))
       ),
-      Statement(
-        "E",
-        List(
-          Implication(
-            in =>
-              if (!in("B")) Map("F" -> true)             else Map("F" -> false),
-            Set("B"),
-            in =>
-              if (!in("B")) Map("F" -> false)             else Map("F" -> true),
-
-          )
-        )
-      ),
+      Statement("E", Implication(in => in("B") != in("F"), Set("B", "F"))),
       Statement(
         "F",
-        List(
-          Implication(
-            in => if (in("E")) Map("B" -> true) else Map.empty,
-            Set("E"),
-            in => if (in("E")) Map("B" -> false) else Map.empty,
-          )
-        )
+        Implication(in => if (in("E")) in("B") else true, Set("E", "B"))
       )
     )
 
     def findSolutions(state: Map[String, Boolean],
                       remaining: List[Statement],
-                      all:List[Statement]): Unit = {
+                      all: List[Statement]): Unit = {
 
       remaining.headOption match {
         case Some(nextStatement) =>
           val assumeTrue = state + ((nextStatement.id, true))
           val assumeFalse = state + ((nextStatement.id, false))
-          def consistent(check:Map[String, Boolean]) = {
+          def consistent(check: Map[String, Boolean]) = {
             val (trueOrUndefined, notTrue) = all.partition { e =>
               !state.get(e.id).contains(false)
             }
 
             val trueOk = {
               trueOrUndefined.forall { statement =>
-                statement.implications.exists { implication =>
-                  val hasAllData = implication.requires.forall(check.keySet)
-                  !hasAllData || {
-                    val implied = implication.ifTrue(check)
-                    val contradiction = {
-                      implied.exists {
-                        case (id, value) =>
-                          check.get(id).exists(_ != value)
-                      }
-                    }
-                    !contradiction
-                  }
-                }
+                val hasAllData =
+                  statement.implication.requiredForCheck.forall(check.keySet)
+                !hasAllData || statement.implication.isTrue(check)
               }
             }
             val falseOk = {
               notTrue.forall { statement =>
-                statement.implications.exists { implication =>
-                  val hasAllData = implication.requires.forall(check.keySet)
-                  !hasAllData || {
-                    val implied = implication.ifFalse(check)
-                    val contradiction = {
-                      implied.exists {
-                        case (id, value) =>
-                          check.get(id).exists(_ != value)
-                      }
-                    }
-                    !contradiction
-                  }
-                }
+                val hasAllData =
+                  statement.implication.requiredForCheck.forall(check.keySet)
+                !hasAllData || statement.implication.isFalse(check)
               }
             }
 
