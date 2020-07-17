@@ -8,26 +8,20 @@ import hod.training.EmptyFrame
 object ScalaPaint {
 
   class Spiel extends EmptyFrame {
-    val bild = new BufferedImage(500,500, BufferedImage.TYPE_INT_ARGB)
+    val bild = new BufferedImage(500, 500, BufferedImage.TYPE_INT_ARGB)
     override def zeichnen(g: Graphics): Unit = {
 
-     var xxx = 1
-
       1 to 100 foreach { y =>
-      xxx=xxx+1
-        1 to 100  foreach { x =>
-        val farbe = if (x%2==0) Color.blue else Color.yellow
-          bild.setRGB(10+x*2,10+y*2, farbe.getRGB)
-          bild.setRGB(10+x*2+1,10+y*2, farbe.getRGB)
-          bild.setRGB(10+x*2,10+y*2+1, farbe.getRGB)
-          bild.setRGB(10+x*2+1,10+y*2+1, farbe.getRGB)
+        1 to 100 foreach { x =>
+          val farbe = new Color( y*2,17,x)
+          val g2 = bild.getGraphics
+          g2.setColor(farbe)
+          val huh = 7
+          g2.fillRect(x * huh, y * huh, huh, huh)
         }
       }
 
-
-      g.drawImage(bild,25,25,null)
-
-
+      g.drawImage(bild, 0, 0, null)
     }
   }
 
