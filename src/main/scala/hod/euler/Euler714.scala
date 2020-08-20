@@ -26,6 +26,7 @@ object Euler714 {
 
   def forBinaryString(binaryString:String) = {
     replacements
+    .iterator
       .filter { case (zero, one) =>
       binaryString.head match {
         case '0' => zero != '0'
@@ -40,7 +41,6 @@ object Euler714 {
       .map { e =>
         BigInt(e)
       }
-     // .distinct
   }
 
   def main(args: Array[String]): Unit = {
