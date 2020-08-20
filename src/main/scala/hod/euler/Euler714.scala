@@ -2,10 +2,11 @@ package hod.euler
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.collection.mutable
 import scala.collection.parallel.CollectionConverters._
 
 object Euler714 {
-  val replacements = {
+  private  val replacements = {
     (0 to 9 flatMap { first =>
       0 to 9 map { second =>
         List(first, second)
@@ -14,14 +15,30 @@ object Euler714 {
       .map { e => (e.head.toString.head, e.last.toString.head) }
   }
 
-  def allDuoDigits = {
-    Iterator.from(1).map { digits =>
+  private  val cache = mutable.HashMap.empty[Int, Array[BigInt]]
+  private  val maxDigitsForCache = 15
+
+  def evalOrFromCache(digits:Int) = {
+    def eval = {
       val min = Integer.parseInt("1".padTo(digits, '0'), 2)
       val max = Integer.parseInt("1".padTo(digits, '1'), 2)
       (min to max).iterator.flatMap { dec =>
         forBinaryString(dec.toBinaryString)
-      }//.distinct
+      }
     }
+    if (digits <= maxDigitsForCache) {
+      cache.getOrElseUpdate(digits, {
+        eval.distinct.toArray
+      }).iterator
+    } else {
+      eval
+    }
+  }
+
+
+
+  def allDuoDigits = {
+    Iterator.from(1).map(evalOrFromCache)
   }
 
   def forBinaryString(binaryString:String) = {
@@ -74,6 +91,7 @@ object Euler714 {
 //    println(sum(150))
 //    println(sum(500))
     measured {
+      (1 to maxDigitsForCache).foreach(evalOrFromCache)
       println(sum(50000))
     }
 
