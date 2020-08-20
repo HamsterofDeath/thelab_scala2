@@ -1,5 +1,7 @@
 package hod.euler
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import scala.collection.parallel.CollectionConverters._
 
 object Euler714 {
@@ -13,19 +15,23 @@ object Euler714 {
   }
 
   def allDuoDigits = {
-
-    Iterator.from(1).flatMap { digits =>
+    Iterator.from(1).map { digits =>
       val min = Integer.parseInt("1".padTo(digits, '0'), 2)
       val max = Integer.parseInt("1".padTo(digits, '1'), 2)
-      (min to max).flatMap { dec =>
-        val binaryString = dec.toBinaryString
-        forBinaryString(binaryString)
-      }.sorted.iterator
+      (min to max).iterator.flatMap { dec =>
+        forBinaryString(dec.toBinaryString)
+      }//.distinct
     }
   }
 
   def forBinaryString(binaryString:String) = {
-    replacements.map { case (zero, one) =>
+    replacements
+      .filter { case (zero, one) =>
+      binaryString.head match {
+        case '0' => zero != '0'
+        case '1' => one != '0'
+      }}
+      .map { case (zero, one) =>
       binaryString.map {
         case x if x == '0' => zero
         case x if x == '1' => one
@@ -34,24 +40,42 @@ object Euler714 {
       .map { e =>
         BigInt(e)
       }
-      .distinct
-      .sorted
+     // .distinct
   }
 
   def main(args: Array[String]): Unit = {
     def duoDigits = allDuoDigits//.to(LazyList)
     def smallestDuoDigitMultipleOf(n: Int) = {
-      duoDigits.find(_ % n == 0).get
+      duoDigits.map { set =>
+        set.filter(_ % n == 0)
+      }.filter(_.nonEmpty)
+        .map(_.min)
+        .next()
     }
 
     def sum(n: Int) = {
+      val counter = new AtomicInteger()
       (1 to n).par.map { i =>
         val ret = smallestDuoDigitMultipleOf(i)
-        println(s"$i -> $ret")
+        if (counter.incrementAndGet()%1000==0) {
+          print(".")
+        }
+
         ret
       }.sum
     }
+//    println(smallestDuoDigitMultipleOf(12))
+//    println(smallestDuoDigitMultipleOf(102))
+//    println(smallestDuoDigitMultipleOf(103))
+//    println(smallestDuoDigitMultipleOf(290))
+//    println(smallestDuoDigitMultipleOf(317))
+//
+//    println(sum(110))
+//    println(sum(150))
+//    println(sum(500))
+    measured {
+      println(sum(50000))
+    }
 
-    println(sum(50000))
   }
 }
