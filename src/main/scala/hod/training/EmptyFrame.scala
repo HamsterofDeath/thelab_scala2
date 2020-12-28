@@ -8,8 +8,8 @@ import javax.swing.{JFrame, JPanel, Timer}
 
 
 class EmptyFrame {
-  private val breite = 800
-  private val hoehe = 800
+  protected def breite = 800
+  protected def hoehe = 800
 
   val workingImage =
     new BufferedImage(breite, hoehe, BufferedImage.TYPE_INT_ARGB)
@@ -25,12 +25,12 @@ class EmptyFrame {
   }
 
   def starteTimer(): Unit = {
-    val timer = new Timer(100, _ => spielSchleife())
+    val timer = new Timer(25, _ => spielSchleife())
     timer.setRepeats(true)
     timer.start()
   }
 
-  protected var links,rechts,oben,unten = false
+  protected var links,rechts,oben,unten,links2,rechts2,oben2,unten2 = false
 
   def gefummel(): Unit = {
     hauptFenster.setUndecorated(false)
@@ -45,6 +45,10 @@ class EmptyFrame {
           case KeyEvent.VK_DOWN => unten = false
           case KeyEvent.VK_LEFT => links = false
           case KeyEvent.VK_RIGHT => rechts = false
+          case KeyEvent.VK_W => oben2 = false
+          case KeyEvent.VK_S => unten2 = false
+          case KeyEvent.VK_A => links2 = false
+          case KeyEvent.VK_D => rechts2 = false
           case _ =>
         }
       }
@@ -55,6 +59,10 @@ class EmptyFrame {
           case KeyEvent.VK_DOWN => unten = true
           case KeyEvent.VK_LEFT => links = true
           case KeyEvent.VK_RIGHT => rechts = true
+          case KeyEvent.VK_W => oben2 = true
+          case KeyEvent.VK_S => unten2 = true
+          case KeyEvent.VK_A => links2 = true
+          case KeyEvent.VK_D => rechts2 = true
           case _ =>
         }
       }
@@ -66,6 +74,10 @@ class EmptyFrame {
     rechts = false
     oben = false
     unten = false
+    links2 = false
+    rechts2 = false
+    oben2 = false
+    unten2 = false
   }
   def zeichnen(g: Graphics) = {
 
