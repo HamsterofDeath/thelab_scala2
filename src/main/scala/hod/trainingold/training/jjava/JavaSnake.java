@@ -1,6 +1,6 @@
-package hod.training.jjava;
+package hod.trainingold.training.jjava;
 
-import hod.training.EmptyFrame;
+import hod.trainingold.training.EmptyFrame;
 
 import java.awt.Color;
 import java.awt.Graphics;

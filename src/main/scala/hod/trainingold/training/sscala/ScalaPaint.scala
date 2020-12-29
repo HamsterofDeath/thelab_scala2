@@ -1,9 +1,9 @@
-package hod.training.sscala
+package hod.trainingold.training.sscala
 
 import java.awt.image.BufferedImage
 import java.awt.{Color, Graphics}
 
-import hod.training.EmptyFrame
+import hod.trainingold.training.EmptyFrame
 
 object ScalaPaint {
   var linksdingy = 500

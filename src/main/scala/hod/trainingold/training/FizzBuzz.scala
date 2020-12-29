@@ -1,4 +1,4 @@
-package hod.training
+package hod.trainingold.training
 
 object FizzBuzz {
   def main(args: Array[String]): Unit = {

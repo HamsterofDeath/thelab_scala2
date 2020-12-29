@@ -1,4 +1,4 @@
-package hod.training;
+package hod.trainingold.training;
 
 public class Ding {
     public static void main(String[] args) {
