@@ -11,6 +11,9 @@ class EmptyFrame {
   protected def breite = 800
   protected def hoehe = 800
 
+  def zufall(max:Int) = (math.random()*max).toInt
+  def zufall(max:Double) = (math.random()*max)
+
   val workingImage =
     new BufferedImage(breite, hoehe, BufferedImage.TYPE_INT_ARGB)
 

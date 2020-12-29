@@ -11,6 +11,8 @@ object Rain {
   }
 
   class RainSimulator extends  EmptyFrame {
+
+
     override def zeichnen(g: Graphics): Unit = {
       super.zeichnen(g)
     }
