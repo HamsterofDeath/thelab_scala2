@@ -39,7 +39,7 @@ object Kenny {
 
     while (true) {
       println("Enter text:")
-      val in = scanner.next()
+      val in = scanner.nextLine()
       println(transform(in))
     }
   }
