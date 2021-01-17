@@ -18,23 +18,21 @@ object RainDemo {
 
     def zufallsTropfen = {
       val start = Position(zufall(breite), 0)
-      val bewegung = Bewegung(0.0, zufall(5.0)+0.1)
+      val bewegung = Bewegung(0.0, zufall(25.0)+0.1)
       RegenTropfen(start, bewegung)
     }
 
     override def zeichnen(g: Graphics): Unit = {
       super.zeichnen(g)
-      tropfen = tropfen ++ (List.fill(15)(zufallsTropfen))
+      tropfen = tropfen ++ (List.fill(55)(zufallsTropfen))
 
       g.setColor(Color.BLUE)
       tropfen.foreach { tropfen =>
-        g.fillRoundRect(
+        g.drawLine(
           tropfen.position.woX.toInt,
           tropfen.position.woY.toInt,
-          2,
-          2,
-          2,
-          2
+          tropfen.next.position.woX.toInt,
+          tropfen.next.position.woY.toInt,
         )
       }
 
