@@ -29,7 +29,7 @@ public class Euler72 {
         var limit2 = 1000000;
         var max = limit2;
         var ds = numberIterator(1, max);
-        var solution = ds//.parallel()
+        var solution = ds.parallel()
                 .mapToLong(d -> {
                          counter.incrementAndGet();
                          if (counter.get() % 1000 == 0) {
