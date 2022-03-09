@@ -238,6 +238,7 @@ package object euler {
         if (next.isEmpty) {
           maxPrimeRead += 2
           None
+
         } else {
           val num = {
             next.get
