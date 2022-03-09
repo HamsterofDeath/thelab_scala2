@@ -20,8 +20,7 @@ public class Euler72 {
     }
 
     public static boolean isReducedProperFraction(int n, int d) {
-        final boolean b = gcdEuclid(n, d) == 1;
-        return b;
+        return gcdEuclid(n, d) == 1;
     }
 
     public static void main(String[] args) {
