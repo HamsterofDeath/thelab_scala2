@@ -464,6 +464,15 @@ package object euler {
 
   implicit class BigIntOps(val bi: BigInt) extends AnyVal {
 
+    import java.math.BigInteger
+
+    def getDigitCount: Int = {
+      val factor = Math.log(2) / Math.log(10)
+      val digitCount = (factor * bi.bitLength + 1).toInt
+      if (BigInteger.TEN.pow(digitCount - 1).compareTo(bi) > 0) return digitCount - 1
+      digitCount
+    }
+
     def sqrtNatural = BigInt(bi.bigInteger.sqrt)
 
     def isPerfectSquare = {
