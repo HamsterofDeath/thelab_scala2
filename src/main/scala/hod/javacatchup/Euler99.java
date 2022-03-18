@@ -12,8 +12,9 @@ public class Euler99 {
                 .map(str -> str.split(Pattern.quote(",")))
                 .map(arr -> Math.log10(Integer.parseInt(arr[0])) * Integer.parseInt(arr[1]))
                 .collect(Collectors.toList());
-        var largest = doubles.stream().max(Double::compareTo).get();
-        var index = doubles.indexOf(largest) + 1;
-        System.out.println(index);
+        doubles.stream().max(Double::compareTo).ifPresent(dbl -> {
+            var index = doubles.indexOf(dbl) + 1;
+            System.out.println(index);
+        });
     }
 }
