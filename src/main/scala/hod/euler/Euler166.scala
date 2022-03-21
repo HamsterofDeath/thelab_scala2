@@ -47,7 +47,7 @@ object Euler166 {
           val openInCol = sumUpTo - sumInCurrentCol
           val openInDiagonal = sumUpTo - sumInDiagonal
 
-          val maxLimit = ((openInCol min openInRow min openInDiagonal)) min 9
+          val maxLimit = openInCol min openInRow min openInDiagonal min 9
 
           (0 to maxLimit).map { e =>
             data(row)(col) = e
