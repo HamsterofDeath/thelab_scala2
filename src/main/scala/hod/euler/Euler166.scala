@@ -3,11 +3,14 @@ import collection.parallel.CollectionConverters._
 
 object Euler166 {
   def main(args: Array[String]): Unit = {
-    val solutions = (0 to 36).par.map { sumUpTo =>
+    val solutions = (0 to 36).map { sumUpTo =>
       val data = Array.fill(4, 4)(0)
 
       def generate(row: Int, col: Int): Int = {
         if (row == 4) {
+          if (sumUpTo==2) {
+            println(data.map(_.mkString(",")).mkString("\n")+"\n")
+          }
           1
         } else {
           val sumInCurrentRow =
