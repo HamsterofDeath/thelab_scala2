@@ -15,6 +15,23 @@ object Euler2 {
   }
 }
 
+object Euler2Rec {
+  def main(args: Array[String]): Unit = {
+    def fib(a:Int, b:Int, limit:Int):Int = {
+      val next = a+b
+      if (next>limit) {
+        0
+      } else {
+        val sumRemaining = fib(b,next,limit)
+        sumRemaining + (if(next%2==0) next else 0)
+      }
+
+    }
+
+    println(fib(1,1,4000000))
+  }
+}
+
 object Euler2CStyle {
   def main(args: Array[String]): Unit = {
     var (first, second, sum) = (1, 2, -12345)
