@@ -23,7 +23,8 @@ object Euler2Rec {
         0
       } else {
         val sumRemaining = fib(b,next,limit)
-        sumRemaining + (if(next%2==0) next else 0)
+        val currentValueIfEven = if (next % 2 == 0) next else 0
+        sumRemaining + currentValueIfEven
       }
 
     }
