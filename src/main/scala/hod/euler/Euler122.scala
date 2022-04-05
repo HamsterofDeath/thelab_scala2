@@ -2,8 +2,8 @@ package hod.euler
 
 object Euler122 {
   def main(args: Array[String]): Unit = {
-    def effExp(n:Int, path:List[Int], shortestSoFar:Int):Int = {
-      if (shortestSoFar < path.length || n<0) {
+    def effExp(n: Int, path: List[Int], shortestSoFar: Int): Int = {
+      if (shortestSoFar < path.length || n < 0) {
         Int.MaxValue
       } else if (n == 0) {
         path.length - 1
@@ -19,9 +19,9 @@ object Euler122 {
       }
     }
 
-    def solveFor(n:Int) = effExp(n-1, List(1), Int.MaxValue)
+    def solveFor(n: Int) = effExp(n - 1, List(1), Int.MaxValue)
 
-    val solution = (1 to  200).map { n =>
+    val solution = (1 to 200).map { n =>
       val ret = solveFor(n)
       println(s"$n -> $ret")
       ret
