@@ -2,7 +2,6 @@ package hod.javacatchup;
 
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -10,12 +9,13 @@ public class Euler206 {
 
     private static final String pattern   = "1_2_3_4_5_6_7_8_9_0";
     private static final String reference = pattern.replaceAll("_", "");
-private static int counter = 0;
+    private static       int    counter   = 0;
+
     record Tuple(int digit, int index) {
     }
 
     private static boolean matches(BigInteger bi) {
-        if (counter++%1000000==0) {
+        if (counter++ % 1000000 == 0) {
             System.out.print('.');
         }
         final AtomicInteger index = new AtomicInteger();
