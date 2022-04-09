@@ -17,7 +17,10 @@ object Euler201 {
     }
 
     val numbers = realCase
-    val indexOfNumber = numbers.zipWithIndex.toMap
+    val indexOfNumber = {
+      val data = numbers.zipWithIndex.toMap
+      Array.tabulate(data.keys.max+1)(data.getOrElse(_,-1))
+    }
 
     val setSize = numbers.size
     val combinationSize = setSize / 2
