@@ -97,15 +97,16 @@ object Euler201 {
     case object Multi extends PathType
 
 
-    val hack = collection.mutable.HashMap.empty[(Int, Int, Int, Boolean), PathType]
+    val hack = collection.mutable.HashMap.empty[(Int, Int, Int), PathType]
     def pathTypeToSum(
         sum: Int,
         using: Int,
         stepsLeft: Int,
         duplicateNotYetFound: Boolean
     ): PathType = {
+      if (duplicateNotYetFound) {
+
       def evaluate = {
-        if (duplicateNotYetFound) {
           if (using == numbers.head) {
             val endReached =
               (sum == using && stepsLeft == 1 || sum == 0 && stepsLeft == 0)
@@ -128,11 +129,12 @@ object Euler201 {
             }
             paths
           }
-        } else {
-          Multi
         }
+        hack.getOrElseUpdate((sum, using, stepsLeft), evaluate)
+      } else {
+        Multi
       }
-      hack.getOrElseUpdate((sum, using, stepsLeft, duplicateNotYetFound), evaluate)
+
     }
 
     def pathTypeOf(sum: Int) =
