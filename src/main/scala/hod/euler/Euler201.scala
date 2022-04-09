@@ -17,6 +17,7 @@ object Euler201 {
     }
 
     val numbers = realCase
+    val indexOfNumber = numbers.zipWithIndex.toMap
 
     val setSize = numbers.size
     val combinationSize = setSize / 2
@@ -35,7 +36,7 @@ object Euler201 {
     val lookUp = collection.mutable.BitSet
       .fromBitMaskNoCopy(Array.tabulate[Long](bits / 64 + 1)(_ => 0))
     def indexOf(sum: Int, using: Int) = {
-      numbers.indexOf(using) * absoluteMax + sum
+      indexOfNumber(using) * absoluteMax + sum
     }
 
     def setTrue(sum: Int, using: Int) = {
@@ -115,7 +116,7 @@ object Euler201 {
             else
               Undefined
           } else {
-            val above = numbers(numbers.indexOf(using) - 1)
+            val above = numbers(indexOfNumber(using) - 1)
             var paths: PathType = Undefined
             val inherited = isSummableUsing(sum, above)
             if (inherited) {
@@ -151,7 +152,7 @@ object Euler201 {
             throw new RuntimeException
           }
         } else {
-          val previous = numbers(numbers.indexOf(using) - 1)
+          val previous = numbers(indexOfNumber(using) - 1)
           var paths = List.empty[List[Int]]
           val inherited = isSummableUsing(sum, previous)
           if (inherited) {
