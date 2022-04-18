@@ -6,8 +6,8 @@ import java.util.stream.Stream;
 
 public class Euler34 {
     public static void main(String[] args) {
-        // upper bound?
-        IntStream.range(3, 1000000).filter(Euler34::isInteresting).forEach(System.out::println);
+        var upperBound = 7*factorial(9);
+        IntStream.range(3, upperBound).filter(Euler34::isInteresting).forEach(System.out::println);
     }
 
     private static boolean isInteresting(int n) {
