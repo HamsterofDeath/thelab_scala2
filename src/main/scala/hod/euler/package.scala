@@ -1,13 +1,67 @@
 package hod
 
-import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream, FileReader}
-import java.math.{BigInteger, MathContext}
+import java.io.{
+  BufferedInputStream,
+  BufferedReader,
+  DataInputStream,
+  DataOutputStream,
+  EOFException,
+  File,
+  FileInputStream,
+  FileOutputStream,
+  FileReader
+}
+import java.math.{BigInteger, MathContext, RoundingMode}
 import java.text.{DecimalFormat, DecimalFormatSymbols}
 import java.util.concurrent.Executors
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 package object euler {
+
+  private val factorials = mutable.HashMap((0, BigInt.int2bigInt(1)))
+
+  def factorial(n: Int): BigInt = {
+    factorials.getOrElseUpdate(
+      n, {
+        n * factorial(n - 1)
+      }
+    )
+  }
+
+  def approximate(
+      whole: BigInt,
+      fractions: Iterator[Int],
+      terms: Int,
+      precision: Int
+  ) = {
+    val mc = new MathContext(precision, RoundingMode.HALF_UP)
+    val one = BigDecimal(1, mc)
+    val zero = BigDecimal(0, mc)
+    def deepDive(remaining: Int): BigDecimal = {
+      val next = BigDecimal(fractions.next(), mc)
+      val step =  {
+        if (remaining > 0) {
+          one / deepDive(remaining - 1)
+        } else {
+          zero
+        }
+      }
+      next + step
+    }
+    BigDecimal(whole, mc) + (one / deepDive(terms))
+  }
+
+  def euler(terms: Int, precision: Int) = {
+    val fractions =
+      Iterator.from(1).flatMap(n => Iterator(1, n * 2,1))
+    approximate(2, fractions, terms, precision)
+  }
+
+  def sqrt2(terms: Int, precision: Int) = {
+    val fractions = Iterator.continually(2)
+    approximate(1, fractions, terms, precision)
+  }
 
   def iterateLongs(from: Long) = {
     var cursor = from
@@ -19,7 +73,7 @@ package object euler {
   }
 
   def executionContextForThreads(
-    threadCount: Int = Runtime.getRuntime.availableProcessors()
+      threadCount: Int = Runtime.getRuntime.availableProcessors()
   ): ExecutionContextExecutor =
     ExecutionContext
       .fromExecutor(Executors.newFixedThreadPool(threadCount))
@@ -34,11 +88,12 @@ package object euler {
     }
 
     def foreach[U](f: T => U): Unit
-    def map[N](f: T => N): Foreach[N] = new Foreach[N] {
-      override def foreach[U](nf: N => U): Unit = {
-        self.foreach(e => nf(f(e)))
+    def map[N](f: T => N): Foreach[N] =
+      new Foreach[N] {
+        override def foreach[U](nf: N => U): Unit = {
+          self.foreach(e => nf(f(e)))
+        }
       }
-    }
   }
 
   def noop(): Unit = {}
@@ -371,22 +426,22 @@ package object euler {
       if (n < 0) {
         false
       } else {
-        (n & 0x3F).toInt match {
+        (n & 0x3f).toInt match {
           case 0x00 | 0x01 | 0x04 | 0x09 | 0x10 | 0x11 | 0x19 | 0x21 | 0x24 |
               0x29 | 0x31 | 0x39 =>
             var sqrt = 0L
             if (n < 410881L) { //John Carmack hack, converted to Java.
               // See: http://www.codemaestro.com/reviews/9
               var i = 0
-              var x2 = .0F
-              var y = .0F
-              x2 = n * 0.5F
+              var x2 = .0f
+              var y = .0f
+              x2 = n * 0.5f
               y = n
               i = java.lang.Float.floatToRawIntBits(y)
               i = 0x5f3759df - (i >> 1)
               y = java.lang.Float.intBitsToFloat(i)
-              y = y * (1.5F - (x2 * y * y))
-              sqrt = (1.0F / y).toLong
+              y = y * (1.5f - (x2 * y * y))
+              sqrt = (1.0f / y).toLong
             } else { //Carmack hack gives incorrect answer for n >= 410881.
               sqrt = Math.sqrt(n).toLong
             }
@@ -425,17 +480,16 @@ package object euler {
     def memoizedByIndex: Int => T = {
       val cache = mutable.HashMap.empty[Int, T]
       var maxEvaluated = -1
-      i: Int =>
-        {
-          assert(i >= 0, "int overflow")
-          while (i > maxEvaluated) {
-            val t = it.next()
-            maxEvaluated += 1
-            cache.put(maxEvaluated, t)
-            maxEvaluated
-          }
-          cache(i)
+      i: Int => {
+        assert(i >= 0, "int overflow")
+        while (i > maxEvaluated) {
+          val t = it.next()
+          maxEvaluated += 1
+          cache.put(maxEvaluated, t)
+          maxEvaluated
         }
+        cache(i)
+      }
     }
 
     def takeWhilePlusOne(filter: T => Boolean) = stopAfter(e => !filter(e))
@@ -469,7 +523,8 @@ package object euler {
     def getDigitCount: Int = {
       val factor = Math.log(2) / Math.log(10)
       val digitCount = (factor * bi.bitLength + 1).toInt
-      if (BigInteger.TEN.pow(digitCount - 1).compareTo(bi) > 0) return digitCount - 1
+      if (BigInteger.TEN.pow(digitCount - 1).compareTo(bi) > 0)
+        return digitCount - 1
       digitCount
     }
 
@@ -523,19 +578,21 @@ package object euler {
       val cache = mutable.HashMap.empty[(Int, Boolean), BigInt]
 
       def eval(n: Int, isNumerator: Boolean): BigInt = {
-        cache.getOrElseUpdate((n, isNumerator), {
-          val on = if (isNumerator) fractions else forDenominator
-          n match {
-            case larger if larger > 2 =>
-              val a = on(larger - 2)
-              val b = eval(larger - 1, isNumerator)
-              val c = eval(larger - 2, isNumerator)
-              a * b + c
-            case 2 => on(0)
-            case 1 => BigInt(1)
-            case _ => throw new IllegalArgumentException(n.toString)
+        cache.getOrElseUpdate(
+          (n, isNumerator), {
+            val on = if (isNumerator) fractions else forDenominator
+            n match {
+              case larger if larger > 2 =>
+                val a = on(larger - 2)
+                val b = eval(larger - 1, isNumerator)
+                val c = eval(larger - 2, isNumerator)
+                a * b + c
+              case 2 => on(0)
+              case 1 => BigInt(1)
+              case _ => throw new IllegalArgumentException(n.toString)
+            }
           }
-        })
+        )
       }
 
       Iterator.from(1).map { n =>
