@@ -1,16 +1,8 @@
 package hod
 
-import java.io.{
-  BufferedInputStream,
-  BufferedReader,
-  DataInputStream,
-  DataOutputStream,
-  EOFException,
-  File,
-  FileInputStream,
-  FileOutputStream,
-  FileReader
-}
+import hod.euler.{gcdEuclid, isReducedProperFraction}
+
+import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream, FileReader}
 import java.math.{BigInteger, MathContext, RoundingMode}
 import java.text.{DecimalFormat, DecimalFormatSymbols}
 import java.util.concurrent.Executors
@@ -650,6 +642,21 @@ package object euler {
       }
     }
   }
+  def isReducedProperFraction(n: Int, d: Int): Boolean = gcdEuclid(n, d) == 1
+
+  def gcdEuclid(a: Int, b: Int) = {
+    var max = Math.max(a, b)
+    var min = Math.min(a, b)
+    var remainder = max % min
+    while ( {
+      remainder != 0
+    }) {
+      max = min
+      min = remainder
+      remainder = max % min
+    }
+    min
+  }
 
 }
 
@@ -678,4 +685,9 @@ object EulerUtils {
 
     true
   }
+
+  def isReducedProperFractionJ(n: Int, d: Int): Boolean = isReducedProperFraction(n,d)
+
+  def gcdEuclidJ(a: Int, b: Int) = gcdEuclid(a,b)
+
 }
