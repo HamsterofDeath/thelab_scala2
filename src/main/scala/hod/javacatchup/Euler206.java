@@ -9,13 +9,13 @@ public class Euler206 {
 
     private static final String pattern   = "1_2_3_4_5_6_7_8_9_0";
     private static final String reference = pattern.replaceAll("_", "");
-    private static       int    counter   = 0;
+    private static       AtomicInteger    counter   = new AtomicInteger();
 
     record Tuple(int digit, int index) {
     }
 
     private static boolean matches(BigInteger bi) {
-        if (counter++ % 1000000 == 0) {
+        if (counter.incrementAndGet() % 1000000 == 0) {
             System.out.print('.');
         }
         final AtomicInteger index = new AtomicInteger();
@@ -39,7 +39,9 @@ public class Euler206 {
                                bi -> bi.compareTo(maxRoot) <= 0,
                                bi -> bi.add(BigInteger.ONE));
         var solution =
-                candidates.map(e -> e.pow(2))
+                candidates
+                        .parallel()
+                        .map(e -> e.pow(2))
                         .filter(Euler206::matches)
                         .findFirst()
                         .map(BigInteger::sqrt);
