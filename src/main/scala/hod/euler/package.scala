@@ -237,7 +237,7 @@ package object euler {
   }
 
   def allPrimes: Iterator[Int] = {
-    Iterator(2, 3) ++ Iterator.from(5, 2).filter(_.isPrime)
+    allPrimesLong.takeWhile(_ <= Int.MaxValue).map(_.toInt)
   }
 
   implicit class FileOps(f: File) {
@@ -315,8 +315,9 @@ package object euler {
       println(s"switching to calculation mode at $next")
       Iterator
         .continually(returnAndAddTwo)
-        .grouped(12345)
+        .grouped(654321)
         .flatMap { chunk =>
+          print('.')
           val subSet = {
             chunk.filter(_.isPrime)
           }
@@ -371,6 +372,8 @@ package object euler {
 
   implicit class LongOps(val l: Long) extends AnyVal {
 
+    def sqr = l*l
+
     def nice = {
       val sym = new DecimalFormatSymbols()
       sym.setGroupingSeparator('.')
@@ -385,7 +388,25 @@ package object euler {
         case 0 => 1
         case _ =>
           var ret = l
-          (1 until n).foreach(_ => ret *= l)
+          var i = 1
+          while (i<n) {
+            ret *= l
+            i+=1
+          }
+          ret
+      }
+    }
+
+    def powSafe(n: Int): BigInt = {
+      n match {
+        case 0 => BigInt(1)
+        case _ =>
+          var ret = BigInt(l)
+          var i = 1
+          while (i<n) {
+            ret *= l
+            i+=1
+          }
           ret
       }
     }
