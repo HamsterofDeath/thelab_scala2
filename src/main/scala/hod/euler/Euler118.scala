@@ -43,7 +43,9 @@ object Euler118 {
       eval
     }
 
-    recur(BitSet.empty, List.empty)
+    measured {
+      recur(BitSet.empty, List.empty)
+    }
     println(distinct.size)
   }
 

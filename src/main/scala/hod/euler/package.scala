@@ -679,9 +679,11 @@ package object euler {
     min
   }
 
+
 }
 
 object EulerUtils {
+
   def isSpecialSum(set: Iterable[Int]): Boolean = {
     val list = set.toList.sorted
     // check size rule
