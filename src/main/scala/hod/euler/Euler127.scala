@@ -22,7 +22,6 @@ object Euler127 {
         gcd(a, b) == 1 &&
         gcd(a, c) == 1 &&
         gcd(b, c) == 1
-
       }
       def radCondition = veryFastRad(a, b, c) < c
 
@@ -65,11 +64,9 @@ object Euler127 {
                 .from(1)
                 .take(c)
                 .map { a =>
-                  (a, c - a, c)
-                }
-                .filter { case (a, b, c) => isAbcHit(a, b, c) }
-                .map(_._3.toLong)
-                .sum
+                  val b = c-a
+                  if (isAbcHit(a, b, c)) c.toLong else 0L
+                }.sum
               sum.addAndGet(calculated)
             }
           }
