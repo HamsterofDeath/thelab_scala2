@@ -7,15 +7,13 @@ import scala.util.Random
 
 object Euler127 {
   def main(args: Array[String]): Unit = {
-    val factors = collection.mutable.HashMap.empty[Int, Set[Long]]
-    def fastFactors(n: Int) = factors(n)
+    val rads = collection.mutable.HashMap.empty[Int, Long]
 
-    def fastRad(a: Int, b: Int, c: Int) = {
-      val bits = collection.mutable.HashSet.empty[Long]
-      bits ++= fastFactors(a)
-      bits ++= fastFactors(b)
-      bits ++= fastFactors(c)
-      bits.product
+    def fastRad(n: Int) = {
+      rads(n)
+    }
+    def veryFastRad(a: Int, b: Int, c: Int) = {
+      fastRad(a) * fastRad(b) * fastRad(c)
     }
     def gcd(a: Int, b: Int) = gcdEuclid(a, b)
     def isAbcHit(a: Int, b: Int, c: Int) = {
@@ -26,7 +24,7 @@ object Euler127 {
         gcd(b, c) == 1
 
       }
-      def radCondition = fastRad(a, b, c) < c
+      def radCondition = veryFastRad(a, b, c) < c
 
       val hits = abCondition && gcdMatch && radCondition
       hits
@@ -43,37 +41,40 @@ object Euler127 {
           n -> primeFactorsOf(n).toSet
         }
         .toList
-        .foreach { case (n, fs) => factors.put(n, fs) }
+        .foreach {
+          case (n, fs) =>
+            rads.put(n, fs.product)
+        }
     }
     println("Filtering")
     val counter = new AtomicInteger()
     val sum = new AtomicLong()
     val ex =
       Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
-          Iterator
-            .from(1)
-            .takeWhile(_ < limit)
-            .toList
-            .reverse
-        .foreach { c =>
-          ex.submit {
-            new Runnable {
-              override def run(): Unit = {
-                if (counter.incrementAndGet()%1000==0) print('.')
-                val calculated = Iterator
-                  .from(1)
-                  .take(c)
-                  .map { a =>
-                    (a, c - a, c)
-                  }
-                  .filter { case (a, b, c) => isAbcHit(a, b, c) }
-                  .map(_._3.toLong)
-                  .sum
-                sum.addAndGet(calculated)
-              }
+    Iterator
+      .from(1)
+      .takeWhile(_ < limit)
+      .toList
+      .reverse
+      .foreach { c =>
+        ex.submit {
+          new Runnable {
+            override def run(): Unit = {
+              if (counter.incrementAndGet() % 1000 == 0) print('.')
+              val calculated = Iterator
+                .from(1)
+                .take(c)
+                .map { a =>
+                  (a, c - a, c)
+                }
+                .filter { case (a, b, c) => isAbcHit(a, b, c) }
+                .map(_._3.toLong)
+                .sum
+              sum.addAndGet(calculated)
             }
           }
         }
+      }
     ex.shutdown()
     measured {
       ex.awaitTermination(Long.MaxValue, TimeUnit.DAYS)
