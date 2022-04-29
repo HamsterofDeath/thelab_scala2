@@ -31,8 +31,7 @@ object Euler127 {
 
     val limit = 120000
     //val limit = 1000
-    println("Precalc factors")
-    measured {
+    bench("precalculate") {
       Random
         .shuffle((1 until limit).toList)
         .par
@@ -45,35 +44,35 @@ object Euler127 {
             rads.put(n, fs.product)
         }
     }
-    println("Filtering")
     val counter = new AtomicInteger()
     val sum = new AtomicLong()
     val ex =
       Executors.newFixedThreadPool(Runtime.getRuntime.availableProcessors())
-    Iterator
-      .from(1)
-      .takeWhile(_ < limit)
-      .toList
-      .reverse
-      .foreach { c =>
-        ex.submit {
-          new Runnable {
-            override def run(): Unit = {
-              if (counter.incrementAndGet() % 1000 == 0) print('.')
-              val calculated = Iterator
-                .from(1)
-                .take(c)
-                .map { a =>
-                  val b = c-a
-                  if (isAbcHit(a, b, c)) c.toLong else 0L
-                }.sum
-              sum.addAndGet(calculated)
+    bench("Jobs") {
+      Iterator
+        .from(1)
+        .takeWhile(_ < limit)
+        .toList
+        .foreach { c =>
+          ex.submit {
+            new Runnable {
+              override def run(): Unit = {
+                if (counter.incrementAndGet() % 1000 == 0) print('.')
+                val calculated = Iterator
+                  .from(1)
+                  .take(c)
+                  .map { a =>
+                    val b = c-a
+                    if (isAbcHit(a, b, c)) c.toLong else 0L
+                  }.sum
+                sum.addAndGet(calculated)
+              }
             }
           }
         }
-      }
+    }
     ex.shutdown()
-    measured {
+    bench("Work") {
       ex.awaitTermination(Long.MaxValue, TimeUnit.DAYS)
     }
     println(sum.get())

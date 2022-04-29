@@ -96,7 +96,11 @@ package object euler {
   case object TargetIsBigger extends ComparisonResult
 
   def measured[T](t: => T) = {
-    println("Operation start")
+    bench("Stuff")(t)
+  }
+
+  def bench[T](name:String)(t: => T) = {
+    println(s"Operation '$name' start")
     val start = System.nanoTime()
     val ret = t
     val end = System.nanoTime()
@@ -115,7 +119,7 @@ package object euler {
   implicit class IterableOnceOps[T](val it: IterableOnce[T]) extends AnyVal {
     def occurences = {
       val data = mutable.HashMap.empty[T, Int]
-      it.foreach { e =>
+      it.iterator.foreach { e =>
         if (data.contains(e)) {
           data.put(e, data(e) + 1)
         } else {
