@@ -222,7 +222,8 @@ package object euler {
 
   def primeFactorsOf(n: Long): Iterator[Long] = {
     var remaining = n
-    allPrimesLong
+    allPrimesCached
+      .iterator
       .takeWhile(_ <= n)
       .flatMap { prime =>
         Iterator
@@ -253,6 +254,8 @@ package object euler {
 
     def slurpWhole = slurp.mkString("\n")
   }
+
+  lazy val allPrimesCached = allPrimesLong.to(LazyList)
 
   def allPrimesLong: Iterator[Long] = {
     val cacheFile = {
