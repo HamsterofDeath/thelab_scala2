@@ -13,6 +13,22 @@ package object euler {
 
   private val factorials = mutable.HashMap((0, BigInt.int2bigInt(1)))
 
+  def singleDigitFactorial(digit: Long) = {
+    digit match {
+      case 0 => 1
+      case 1 => 1
+      case 2 => 2
+      case 3 => 6
+      case 4 => 24
+      case 5 => 120
+      case 6 => 720
+      case 7 => 5040
+      case 8 => 40320
+      case 9 => 362880
+    }
+  }
+
+
   def factorial(n: Int): BigInt = {
     factorials.getOrElseUpdate(
       n, {
@@ -547,6 +563,10 @@ package object euler {
         return digitCount - 1
       digitCount
     }
+
+    def allDigitsReversed = digits.toArray.reverseIterator
+
+    def digits = bi.toString().iterator.map(Character.getNumericValue)
 
     def sqrtNatural = BigInt(bi.bigInteger.sqrt)
 
