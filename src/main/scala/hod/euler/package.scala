@@ -71,6 +71,11 @@ package object euler {
     approximate(1, fractions, terms, precision)
   }
 
+  def phi(terms: Int, precision: Int) = {
+    val fractions = Iterator.continually(1)
+    approximate(1, fractions, terms, precision)
+  }
+
   def iterateLongs(from: Long) = {
     var cursor = from
     Iterator.continually {
