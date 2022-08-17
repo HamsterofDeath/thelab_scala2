@@ -81,15 +81,7 @@ object Euler714 {
         ret
       }.sum
     }
-//    println(smallestDuoDigitMultipleOf(12))
-//    println(smallestDuoDigitMultipleOf(102))
-//    println(smallestDuoDigitMultipleOf(103))
-//    println(smallestDuoDigitMultipleOf(290))
-//    println(smallestDuoDigitMultipleOf(317))
-//
-//    println(sum(110))
-//    println(sum(150))
-//    println(sum(500))
+
     measured {
       (1 to maxDigitsForCache).foreach(evalOrFromCache)
       println(sum(50000))
