@@ -249,7 +249,7 @@ package object euler {
     var remaining = n
     allPrimesCached
       .iterator
-      .takeWhile(_ <= n)
+      .takeWhilePlusOne(_ => remaining > 1)
       .flatMap { prime =>
         Iterator
           .continually(prime)
@@ -259,7 +259,23 @@ package object euler {
             prime
           }
       }
+
+  }
+  def primeFactorsOf(n: BigInt): Iterator[Long] = {
+    var remaining = n
+    allPrimesCached
+      .iterator
       .takeWhilePlusOne(_ => remaining > 1)
+      .flatMap { prime =>
+        Iterator
+          .continually(prime)
+          .takeWhile(remaining % _ == 0)
+          .map { _ =>
+            remaining /= prime
+            prime
+          }
+      }
+
   }
 
   def allPrimes: Iterator[Int] = {
@@ -539,7 +555,7 @@ package object euler {
       var stop = false
       it.takeWhile { e =>
         val take = !stop
-        stop = isLastAccepted(e)
+        stop |= isLastAccepted(e)
         take
       }
     }
