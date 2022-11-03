@@ -2,7 +2,7 @@ package hod.other.trainingold.training
 
 import scala.io.StdIn
 
-object Öli {
+object OldThing {
   def main(args: Array[String]): Unit = {
     var text = "flasch"
     var x = 1
