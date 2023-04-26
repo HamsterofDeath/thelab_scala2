@@ -30,11 +30,14 @@ object Euler352 {
     }
 
     val expectedPositive: Decimal = 1 - expectedNegative
-    def expectedTestsIfNegative: Decimal = planIfNegative.map(_.expectedNumberOfTests).foldLeft(lift(0))(_ + _)
-    def expectedTestsIfPositive: Decimal = planIfPositive.map(_.expectedNumberOfTests).foldLeft(lift(0))(_ + _)
+    def expectedTestsIfNegative: Decimal = planIfNegative.map(_.expectedNumberOfTests)
+                                                         .foldLeft(lift(0))(_ + _)
+    def expectedTestsIfPositive: Decimal = planIfPositive.map(_.expectedNumberOfTests)
+                                                         .foldLeft(lift(0))(_ + _)
   }
 
-  case class SuggestedStrategy(testOnSamples: Int, nextStep: Option[NextStep], samplesTotalLeft: Int) {
+  case class SuggestedStrategy(testOnSamples: Int, nextStep: Option[NextStep],
+                               samplesTotalLeft: Int) {
 
     val testsIfNegative: Decimal = nextStep.map(_.expectedTestsIfNegative).getOrElse(0.0)
     val testsIfPositive: Decimal = nextStep.map(_.expectedTestsIfPositive).getOrElse(0.0)
@@ -45,7 +48,8 @@ object Euler352 {
       val spacing = "".padTo(level, ' ')
       if (testOnSamples > 0) {
         s"""|$spacing Testing $testOnSamples of $samplesTotalLeft, expecting $expectedNumberOfFollowUpTests more tests.
-            |${nextStep.map(_.describePlan(level + 1)).getOrElse(s"$spacing No next step")}""".stripMargin
+            |${nextStep.map(_.describePlan(level + 1)).getOrElse(s"$spacing No next step")}"""
+          .stripMargin
       } else {
         s"$spacing Nothing"
       }
@@ -74,11 +78,12 @@ object Euler352 {
     }
 
     class Cache {
-      private val cachePositive = Array.tabulate[SuggestedStrategy](scenario.samples+1)(_ => null)
-      private val cacheNegative = Array.tabulate[SuggestedStrategy](scenario.samples+1)(_ => null)
+      private val cachePositive = Array.tabulate[SuggestedStrategy](scenario.samples + 1)(_ => null)
+      private val cacheNegative = Array.tabulate[SuggestedStrategy](scenario.samples + 1)(_ => null)
 
-      def getOrElseUpdate(samplesLeft:Int, positive:Boolean, eval: => SuggestedStrategy): SuggestedStrategy = {
-        val array = if (positive) cachePositive else cacheNegative
+      def getOrElseUpdate(samplesLeft: Int, positive: Boolean,
+                          eval: => SuggestedStrategy): SuggestedStrategy = {
+        val array  = if (positive) cachePositive else cacheNegative
         val stored = array(samplesLeft)
         if (stored != null) {
           stored
@@ -92,15 +97,14 @@ object Euler352 {
 
     private val cache = new Cache
 
-
     def calculateChanceOfNegativeResultInPositiveGroup(testSize: Int, totalSize: Int): Decimal = {
-      val allHealthy = scenario.goodSampleChance.pow(totalSize)
-      val atLeastOneSick = 1 - allHealthy
-      val factor = 1 / atLeastOneSick
+      val allHealthy                  = scenario.goodSampleChance.pow(totalSize)
+      val atLeastOneSick              = 1 - allHealthy
+      val factor                      = 1 / atLeastOneSick
       val probabilityOfPositiveResult = {
         val probabilityOfEvent = {
           val negativeInThisCase = testSize
-          val probabilityOfCase = scenario.goodSampleChance.pow(negativeInThisCase)
+          val probabilityOfCase  = scenario.goodSampleChance.pow(negativeInThisCase)
           (1 - probabilityOfCase) * factor
         }
         probabilityOfEvent
@@ -133,7 +137,8 @@ object Euler352 {
       index
     }
 
-    private def determineFullStrategy(samplesLeft: Int, testedPositive: Boolean): SuggestedStrategy = {
+    private def determineFullStrategy(samplesLeft: Int,
+                                      testedPositive: Boolean): SuggestedStrategy = {
       cache.getOrElseUpdate(samplesLeft, testedPositive, {
         samplesLeft match {
           case 0 => noTest // 0 samples = no test required
@@ -155,9 +160,9 @@ object Euler352 {
 
     private def splitUnknownSample(samplesLeft: Int, sizeOfGroupToTest: Int) = {
       val chanceOfNegativeResult = probabilityOfNegativeResult(sizeOfGroupToTest)
-      val untested = samplesLeft - sizeOfGroupToTest
-      val ifNegative = determineFullStrategy(untested, testedPositive = false)
-      val ifPositive = determineFullStrategy(sizeOfGroupToTest, testedPositive = true)
+      val untested               = samplesLeft - sizeOfGroupToTest
+      val ifNegative             = determineFullStrategy(untested, testedPositive = false)
+      val ifPositive             = determineFullStrategy(sizeOfGroupToTest, testedPositive = true)
       SuggestedStrategy(sizeOfGroupToTest,
         Some {
           NextStep(chanceOfNegativeResult,
@@ -172,13 +177,13 @@ object Euler352 {
       val chanceOfNegativeResult = {
         calculateChanceOfNegativeResultInPositiveGroup(sizeOfGroupToTest, samplesLeft)
       }
-      val untested = samplesLeft - sizeOfGroupToTest
-      val ifPositive = {
-        val first = determineFullStrategy(sizeOfGroupToTest, testedPositive = true)
+      val untested               = samplesLeft - sizeOfGroupToTest
+      val ifPositive             = {
+        val first  = determineFullStrategy(sizeOfGroupToTest, testedPositive = true)
         val second = determineFullStrategy(untested, testedPositive = false)
         (first :: second :: Nil).filter(_.testOnSamples > 0)
       }
-      val ifNegative = {
+      val ifNegative             = {
         determineFullStrategy(untested, testedPositive = true)
       }
 
@@ -191,7 +196,8 @@ object Euler352 {
       )
     }
     def determineStrategy(knownAsPositiveInitially: Boolean): SuggestedStrategy = {
-      val solutionPlan = determineFullStrategy(scenario.samples, testedPositive = knownAsPositiveInitially)
+      val solutionPlan = determineFullStrategy(scenario.samples,
+        testedPositive = knownAsPositiveInitially)
       solutionPlan
     }
 
@@ -206,18 +212,21 @@ object Euler352 {
 
     def explain(samples: Int, p: Decimal, knownAsPositiveInitially: Boolean) = {
       val scenario = Scenario(samples, p)
-      val eval = new Evaluate(scenario)
+      val eval     = new Evaluate(scenario)
       println(eval.formatShort(false))
       eval.determineStrategy(knownAsPositiveInitially)
     }
 
-    val solution = {
+    def solution = {
       Range.inclusive(1, 50).par.map { i =>
         val p = 0.01 * i
         explain(10000, p, knownAsPositiveInitially = false).expectedNumberOfTests
       }.sum
     }
-    println(solution)
+
+    measured {
+      println(solution)
+    }
     //    explain(25,0.02, knownAsPositiveInitially = false)
     //    explain(25,0.10, knownAsPositiveInitially = false)
   }
