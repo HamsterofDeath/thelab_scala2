@@ -1,7 +1,7 @@
 package hod.euler
 
-import java.util.concurrent.{Executors, TimeUnit}
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
+import java.util.concurrent.{Executors, TimeUnit}
 import scala.collection.parallel.CollectionConverters.seqIsParallelizable
 import scala.util.Random
 
@@ -62,9 +62,10 @@ object Euler127 {
                   .from(1)
                   .take(c)
                   .map { a =>
-                    val b = c-a
+                    val b = c - a
                     if (isAbcHit(a, b, c)) c.toLong else 0L
-                  }.sum
+                  }
+                  .sum
                 sum.addAndGet(calculated)
               }
             }

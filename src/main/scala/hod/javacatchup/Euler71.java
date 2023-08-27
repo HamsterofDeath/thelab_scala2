@@ -4,8 +4,6 @@ import hod.EulerUtils;
 
 import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 public class Euler71 {
@@ -37,7 +35,8 @@ public class Euler71 {
                                 return Double.compare(fractionLeft, fractionRight);
                             })
                             .orElseGet(() -> d - 1);
-                 //   System.out.println("Candidate: "+smallestNumerator + "/"+d+"="+(smallestNumerator/(double)d));
+                    //   System.out.println("Candidate: "+smallestNumerator + "/"+d+"="+
+                    //   (smallestNumerator/(double)d));
                     return new Tuple(smallestNumerator, d);
                 }).min(Comparator.comparingDouble(o -> Math.abs(reference - o.asDouble())));
         System.out.println(result);

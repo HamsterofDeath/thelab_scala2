@@ -1,7 +1,5 @@
 package hod.euler
 
-import scala.jdk.CollectionConverters._
-
 object Euler151 {
   def main(args: Array[String]): Unit = {
     case class SheetConfig(

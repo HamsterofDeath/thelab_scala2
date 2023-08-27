@@ -48,20 +48,17 @@ object Euler100 {
     val minR = 5 //evalROfB(minB).toLong
 
     val validBlues = {
-      List(1, 3, 15,
-        85, 493, 2871,
-        16731, 97513, 568345,
-        3312555, 19306983, 112529341,
+      List(1, 3, 15, 85, 493, 2871, 16731, 97513, 568345, 3312555, 19306983,
+        112529341,
         // wolfram alpha knew about the sequence...
-        655869061, 3822685023L, 22280241075L,
-        129858761425L, 756872327473L, 4411375203411L,
-        25711378892991L, 149856898154533L, 873430010034205L)
+        655869061, 3822685023L, 22280241075L, 129858761425L, 756872327473L,
+        4411375203411L, 25711378892991L, 149856898154533L, 873430010034205L)
     }
 
     val firstSolution = validBlues.find(b => evalTotalOfB(b) > 1000000000000L)
     println(firstSolution)
 
-/*
+    /*
     var tries = 0L
     Iterator.iterate(minR)(_ + 1).foreach { red =>
       tries += 1
@@ -76,6 +73,6 @@ object Euler100 {
         println(s"\n$blueLong blue, $red red = ${blues + red} total, result = ${prob}")
       }
     }
-*/
+     */
   }
 }

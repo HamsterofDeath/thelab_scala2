@@ -72,7 +72,6 @@ object Euler185 {
       95L -> 1
     )
 
-
     val realData = List(
       5616185650518293L -> 2,
       3847439647293047L -> 1,
@@ -127,9 +126,12 @@ object Euler185 {
   }
 
   case class Sequence(seq: Array[Int]) {
-    def describeWithAssumption(assumedCorrectIndexes: collection.Set[Int]): String = {
-      assumedCorrectIndexes.toList.sorted.zipWithIndex.map { case (digit, int) =>
-        if (assumedCorrectIndexes.contains(int)) digit else "X"
+    def describeWithAssumption(
+                                assumedCorrectIndexes: collection.Set[Int]
+                              ): String = {
+      assumedCorrectIndexes.toList.sorted.zipWithIndex.map {
+        case (digit, int) =>
+          if (assumedCorrectIndexes.contains(int)) digit else "X"
       }.mkString
     }
 
@@ -137,7 +139,9 @@ object Euler185 {
 
     override def toString: String = shortDescribe
 
-    def foreachWithMarkedIndices(marked: collection.Set[Int])(function: (Int, Int, Boolean) => Unit): Unit = {
+    def foreachWithMarkedIndices(
+                                  marked: collection.Set[Int]
+                                )(function: (Int, Int, Boolean) => Unit): Unit = {
       foreachWithIndex { (digit, index) =>
         function(digit, index, marked.contains(index))
       }
@@ -153,17 +157,19 @@ object Euler185 {
 
   }
   case class Constraint(sequence: Sequence, correct: Int) {
-    def constrainedOptions(whiteList: WhiteList): Iterator[collection.Set[Int]] = {
-      val alreadyUsedUp = whiteList.countOverlapWithAssumedSolution(sequence.seq)
-      sequence.seq
-      .indices
-      .filter { i =>
-        whiteList.isWhitelisted(sequence.seq(i), i) && !whiteList.isLocked(i)
-      }
-      .combinations(correct - alreadyUsedUp)
-      .map { ints =>
-        mutable.BitSet.empty ++= ints
-      }
+    def constrainedOptions(
+                            whiteList: WhiteList
+                          ): Iterator[collection.Set[Int]] = {
+      val alreadyUsedUp =
+        whiteList.countOverlapWithAssumedSolution(sequence.seq)
+      sequence.seq.indices
+              .filter { i =>
+                whiteList.isWhitelisted(sequence.seq(i), i) && !whiteList.isLocked(i)
+              }
+              .combinations(correct - alreadyUsedUp)
+              .map { ints =>
+                mutable.BitSet.empty ++= ints
+              }
     }
   }
 
@@ -171,7 +177,8 @@ object Euler185 {
 
     private val length             = constraints.head.sequence.seq.length
     private val possible           = Array.tabulate(length)(_ => mutable.BitSet.empty)
-    private val manualOptionsStack = Array.tabulate(length)(_ => mutable.BitSet.empty)
+    private val manualOptionsStack =
+      Array.tabulate(length)(_ => mutable.BitSet.empty)
     private var unsolvedSlots      = mutable.BitSet.empty
     private var unassumedSlots     = mutable.BitSet.empty
     private var unsolvableSlots    = mutable.BitSet.empty
@@ -208,12 +215,15 @@ object Euler185 {
     }
 
     def explainDetails: String = {
-      (0 until length).map { i =>
-        possible(i).mkString
-      }.mkString(", ")
+      (0 until length)
+        .map { i =>
+          possible(i).mkString
+        }
+        .mkString(", ")
     }
 
-    def assumedSolutions: immutable.IndexedSeq[Int] = 0 until length map assumedSolution
+    def assumedSolutions: immutable.IndexedSeq[Int] =
+      0 until length map assumedSolution
 
     def describeState: String = {
       if (solutionFound) "Solution candidate"
@@ -319,7 +329,10 @@ object Euler185 {
       val initialConstraints = {
         forbiddenFirst.map {
           case (seq, correct) =>
-            Constraint(Sequence(seq.toString.toArray.map(_.toString.toInt)), correct)
+            Constraint(
+              Sequence(seq.toString.toArray.map(_.toString.toInt)),
+              correct
+            )
         }
       }
       val whiteList = new WhiteList(initialConstraints)
@@ -349,83 +362,86 @@ object Euler185 {
                 constraint.constrainedOptions(whiteList).toList
               }
 
-              possibleOnThisLevel.foreach {
-                assumedCorrectIndexes =>
+              possibleOnThisLevel.foreach { assumedCorrectIndexes =>
+                val blacklistedInThisIteration = mutable.BitSet.empty
 
-                  val blacklistedInThisIteration = mutable.BitSet.empty
+                def describeState(reversed: Boolean): Unit = {
+                  if (debug) {
+                    val label = if (reversed) "Reversed" else "Applied"
+                    println {
+                      val details = currentSequence.describeWithAssumption(assumedCorrectIndexes)
+                      s"${(0 to depth).map { _ => " " }.mkString}" +
+                      s"$label ${currentSequence.shortDescribe}," +
+                      s"assuming as correct $details," +
+                      s"whitelist is at ${whiteList.describeCurrentSolution}," +
+                      s"state ${whiteList.describeState}," +
+                      s"details: ${whiteList.explainDetails}"
+                    }
+                  }
+                }
 
-                  def describeState(reversed: Boolean): Unit = {
-                    if (debug) {
-                      val label = if (reversed) "Reversed" else "Applied"
-                      println {
-                        s"${(0 to depth).map { _ => " " }.mkString}" +
-                        s"$label ${currentSequence.shortDescribe}," +
-                        s"assuming as correct ${currentSequence.describeWithAssumption(assumedCorrectIndexes)}," +
-                        s"whitelist is at ${whiteList.describeCurrentSolution}," +
-                        s"state ${whiteList.describeState}," +
-                        s"details: ${whiteList.explainDetails}"
+                def traverseCurrentSequence(
+                                             func: (Int, Int, Boolean) => Unit
+                                           ): Unit = {
+                  val traverseThis = currentSequence
+                  traverseThis.foreachWithMarkedIndices(assumedCorrectIndexes) {
+                    (digit, index, marked) =>
+                      if (!alreadyMarkedAtThisLevel(index)) {
+                        func(digit, index, marked)
+                      }
+                  }
+                }
+
+                def setupWhitelist(): Unit = {
+                  traverseCurrentSequence { (digit, index, assumedCorrect) =>
+                    if (assumedCorrect) {
+                      whiteList.markCorrect(digit, index)
+                    } else {
+                      if (whiteList.isWhitelisted(digit, index)) {
+                        blacklistedInThisIteration += index
+                        whiteList.blacklist(digit, index)
                       }
                     }
                   }
+                }
 
-                  def traverseCurrentSequence(func: (Int, Int, Boolean) => Unit): Unit = {
-                    val traverseThis = currentSequence
-                    traverseThis.foreachWithMarkedIndices(assumedCorrectIndexes) {
-                      (digit, index, marked) =>
-                        if (!alreadyMarkedAtThisLevel(index)) {
-                          func(digit, index, marked)
-                        }
+                def resetWhiteList(): Unit = {
+                  traverseCurrentSequence { (digit, index, assumedCorrect) =>
+                    if (assumedCorrect) {
+                      whiteList.unmarkCorrect(index)
+                    } else {
+                      if (blacklistedInThisIteration(index)) {
+                        whiteList.whitelist(digit, index)
+                      }
                     }
                   }
+                }
 
-                  def setupWhitelist(): Unit = {
-                    traverseCurrentSequence {
-                      (digit, index, assumedCorrect) =>
-                        if (assumedCorrect) {
-                          whiteList.markCorrect(digit, index)
-                        } else {
-                          if (whiteList.isWhitelisted(digit, index)) {
-                            blacklistedInThisIteration += index
-                            whiteList.blacklist(digit, index)
-                          }
-                        }
-                    }
-                  }
-
-                  def resetWhiteList(): Unit = {
-                    traverseCurrentSequence {
-                      (digit, index, assumedCorrect) =>
-                        if (assumedCorrect) {
-                          whiteList.unmarkCorrect(index)
-                        } else {
-                          if (blacklistedInThisIteration(index)) {
-                            whiteList.whitelist(digit, index)
-                          }
-                        }
-                    }
-                  }
-
-                  setupWhitelist()
-                  describeState(false)
-                  recur(remainingConstraints.tail, depth + 1)
-                  if (whiteList.returnThis) {
-                    return
-                  } else {
-                    resetWhiteList()
-                    describeState(true)
-                  }
+                setupWhitelist()
+                describeState(false)
+                recur(remainingConstraints.tail, depth + 1)
+                if (whiteList.returnThis) {
+                  return
+                } else {
+                  resetWhiteList()
+                  describeState(true)
+                }
 
               }
             }
           } else if (whiteList.solutionFound) {
-            println(s"\nFound possible solution: ${whiteList.describeCurrentSolution}")
+            println(
+              s"\nFound possible solution: ${whiteList.describeCurrentSolution}"
+            )
             whiteList.markFinalSolution()
           }
         }
 
         recur(initialConstraints, 0)
         if (whiteList.returnThis) {
-          println(s"Solution after using all constraints: ${whiteList.describeCurrentSolution}")
+          println(
+            s"Solution after using all constraints: ${whiteList.describeCurrentSolution}"
+          )
         }
       }
 

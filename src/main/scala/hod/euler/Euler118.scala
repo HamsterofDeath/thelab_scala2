@@ -2,7 +2,6 @@ package hod.euler
 
 import scala.collection.immutable.BitSet
 import scala.collection.mutable
-import scala.collection.parallel.CollectionConverters.ArrayIsParallelizable
 
 object Euler118 {
   def main(args: Array[String]): Unit = {

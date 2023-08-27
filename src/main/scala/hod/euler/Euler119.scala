@@ -13,11 +13,13 @@ object Euler119 {
     val precalcPowers = {
       for (pow <- 2 to 10; sum <- 2 to 100) yield (sum, pow, power(sum, pow))
     }
-    val correct = precalcPowers.filter({
-      case (sum, pow, powered) =>
-        val digits = powered.toString().map(_.getNumericValue).sum
-        digits == sum && power(digits, pow) == powered
-    }).sortBy(_._3)
+    val correct       = precalcPowers
+      .filter({
+        case (sum, pow, powered) =>
+          val digits = powered.toString().map(_.getNumericValue).sum
+          digits == sum && power(digits, pow) == powered
+      })
+      .sortBy(_._3)
     println(correct(29)._3)
   }
 }

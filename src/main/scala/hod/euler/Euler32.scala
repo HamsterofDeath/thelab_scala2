@@ -4,7 +4,7 @@ import scala.collection.parallel._
 
 object Euler32 {
   def main(args: Array[String]): Unit = {
-    val allDigits     = "123456789"
+    val allDigits = "123456789"
     val source    = allDigits.toSeq.map(_.getNumericValue)
     val expected  = allDigits.map(_.getNumericValue).toSet
     val solutions = {
@@ -24,7 +24,7 @@ object Euler32 {
                     .flatMap { b =>
                       val product = aInt * b.mkString.toLong
                       val digits = (product.allDigits ++ a ++ b).toList
-                      if (digits.size==9 && digits.toSet == expected) {
+                      if (digits.size == 9 && digits.toSet == expected) {
                         println(s"$aInt * ${b.mkString} = $product")
                         List(product)
                       } else {

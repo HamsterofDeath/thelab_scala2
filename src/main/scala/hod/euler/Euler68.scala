@@ -8,23 +8,27 @@ object Euler68 {
   def main(args: Array[String]): Unit = {
     case class DigitPlacement(digit: Int, where: Int)
 
-    class NGonRing(n: Int, total:Int) {
+    class NGonRing(n: Int, total: Int) {
       def isFull: Boolean = selectedDigits.forall(_.isDefined)
 
       private val selectedDigits = Array.tabulate[Option[Int]](n * 2)(_ => None)
       private val freeDigits     = mutable.HashSet.empty[Int] ++= 1 to (n * 2)
 
       def solutionSetSimpleString: String = {
-        solutionSets.map { triplet =>
-          triplet.mkString("")
-        }.mkString("")
+        solutionSets
+          .map { triplet =>
+            triplet.mkString("")
+          }
+          .mkString("")
       }
 
-      def solutionSetsFormatted: String ={
+      def solutionSetsFormatted: String = {
         val details = {
-          solutionSets.map { triplet =>
-            triplet.mkString(", ")
-          }.mkString("; ")
+          solutionSets
+            .map { triplet =>
+              triplet.mkString(", ")
+            }
+            .mkString("; ")
         }
         s"$total/${solutionSetSimpleString.length}: $details"
       }
@@ -45,18 +49,19 @@ object Euler68 {
             sets
           } else {
             Iterator
-            .continually(sets)
-            .flatten
-            .slice(smallestIndex, smallestIndex + n)
-            .toList
+              .continually(sets)
+              .flatten
+              .slice(smallestIndex, smallestIndex + n)
+              .toList
           }
         }
         ret.distinct
       }
 
       def placements: Array[DigitPlacement] = {
-        selectedDigits.zipWithIndex.collect { case (Some(digit), where) =>
-          DigitPlacement(digit, where)
+        selectedDigits.zipWithIndex.collect {
+          case (Some(digit), where) =>
+            DigitPlacement(digit, where)
         }
       }
 
@@ -75,7 +80,7 @@ object Euler68 {
       }
 
       def indexesOfTriplet(i: Int): Array[Int] = {
-        if (i +1 < n) {
+        if (i + 1 < n) {
           Array(i + n, i, i + 1)
         } else {
           Array(i + n, i, 0)
@@ -94,9 +99,11 @@ object Euler68 {
       }
 
       def allSolutionsForNextLine: List[List[DigitPlacement]] = {
-        nextFreeLine.map { index =>
-          generateSolutionsFor(index).toList
-        }.getOrElse(Nil)
+        nextFreeLine
+          .map { index =>
+            generateSolutionsFor(index).toList
+          }
+          .getOrElse(Nil)
       }
 
       def generateSolutionsFor(i: Int): Iterator[List[DigitPlacement]] = {
@@ -112,19 +119,17 @@ object Euler68 {
           lineIndexes.filterNot(alreadyPlacedWhere.contains)
         }
 
-        freeDigits
-        .toList
-        .combinations(3 - alreadyPlacedDigits.length)
-        .filter(_.sum + alreadyPlacedSum == total)
-        .flatMap { digitsToPlace =>
-          freeIndexes
-          .permutations
-          .map { putWhere =>
-            digitsToPlace.zip(putWhere).map {
-              case (a, b) => DigitPlacement(a, b)
-            }
-          }
-        }
+        freeDigits.toList
+                  .combinations(3 - alreadyPlacedDigits.length)
+                  .filter(_.sum + alreadyPlacedSum == total)
+                  .flatMap { digitsToPlace =>
+                    freeIndexes.permutations
+                               .map { putWhere =>
+                                 digitsToPlace.zip(putWhere).map {
+                                   case (a, b) => DigitPlacement(a, b)
+                                 }
+                               }
+                  }
       }
     }
     def solve(operateOn: NGonRing) = {
@@ -148,8 +153,8 @@ object Euler68 {
     }
 
     val solutions = {
-      val minTotal = 1+2+3
-      val maxTotal = 8+9+10
+      val minTotal = 1 + 2 + 3
+      val maxTotal = 8 + 9 + 10
       val ngons = {
         (minTotal to maxTotal).par.flatMap { total =>
           solve(new NGonRing(5, total))

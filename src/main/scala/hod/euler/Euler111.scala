@@ -16,7 +16,7 @@ object Euler111 {
     class Primes(val targetDigit: Int) {
       var highestCount = 0
       var matchCount = 0
-      val matches      = mutable.HashSet.empty[Long]
+      val matches    = mutable.HashSet.empty[Long]
       var sum = 0L
 
       def initWith(prime: Long) = {
@@ -33,23 +33,25 @@ object Euler111 {
         sum += prime
       }
 
-      override def toString = s"Primes($highestCount, $matchCount, $sum, $targetDigit)"
+      override def toString =
+        s"Primes($highestCount, $matchCount, $sum, $targetDigit)"
     }
     val analyzed = mutable.HashMap.empty[Int, Primes]
     withTenDigits.foreach { prime =>
       val occurences = prime.toString.map((c: Char) => c.asDigit).occurences
-      occurences.foreach { case (digit, count) =>
-        analyzed.get(digit) match {
-          case Some(subPrimes) if subPrimes.highestCount == count =>
-            subPrimes.add(prime)
-          case Some(subPrimes) if subPrimes.highestCount > count =>
-          case Some(subPrimes) if subPrimes.highestCount < count =>
-            subPrimes.initWith(prime)
-          case None =>
-            val primes = new Primes(digit)
-            primes.initWith(prime)
-            analyzed.put(digit, primes)
-        }
+      occurences.foreach {
+        case (digit, count) =>
+          analyzed.get(digit) match {
+            case Some(subPrimes) if subPrimes.highestCount == count =>
+              subPrimes.add(prime)
+            case Some(subPrimes) if subPrimes.highestCount > count =>
+            case Some(subPrimes) if subPrimes.highestCount < count =>
+              subPrimes.initWith(prime)
+            case None =>
+              val primes = new Primes(digit)
+              primes.initWith(prime)
+              analyzed.put(digit, primes)
+          }
       }
     }
     val solution = analyzed.values.map(_.sum).sum

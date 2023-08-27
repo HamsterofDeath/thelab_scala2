@@ -1,7 +1,5 @@
 package hod.euler
 
-import scala.collection.parallel.CollectionConverters._
-
 object Euler138 {
   def main(args: Array[String]): Unit = {
     //https://oeis.org/A007805

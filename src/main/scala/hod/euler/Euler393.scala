@@ -1,9 +1,6 @@
 package hod.euler
 
-import java.text.DecimalFormat
-import scala.collection.{BitSet, mutable}
-import scala.io.AnsiColor
-import scala.util.Random
+import scala.collection.mutable
 
 object Euler393 {
   sealed trait Move {
@@ -123,7 +120,7 @@ object Euler393 {
           targeted(x + move.shiftX)(y + move.shiftY) = true
 
         }
-        def resetMove(x: Int, y: Int, move:Move) = {
+        def resetMove(x: Int, y: Int, move: Move) = {
           data(y) &= ~(7 << x * 3)
           targeted(x + move.shiftX)(y + move.shiftY) = false
         }
@@ -157,7 +154,7 @@ object Euler393 {
 
         }
 
-        def encodedRow1 = encodedRows>>32
+        def encodedRow1 = encodedRows >> 32
         def encodedRow2 = encodedRows << 32 >> 32
         override def toString = {
           s"${print(encodedRow1)}\n${print(encodedRow2)}"
@@ -202,7 +199,8 @@ object Euler393 {
               moveHistory.ensureNot(x + 1, y - 1, Down) &&
               moveHistory.isTarget(x, y - 1) &&
               (y < size - 1 || moveHistory.isTarget(x - 1, y)) &&
-              (moveHistory.ensureNot(x - 1, y, Down) || moveHistory.isTarget(x - 1, y))
+              (moveHistory
+                 .ensureNot(x - 1, y, Down) || moveHistory.isTarget(x - 1, y))
             }
 
             def canGoUp = {
@@ -210,14 +208,19 @@ object Euler393 {
               moveHistory.ensureNot(x, y - 2, Down) &&
               moveHistory.ensureNot(x - 1, y - 1, Right) &&
               moveHistory.ensureNot(x + 1, y - 1, Left) &&
-              (y + 2 != size || !moveHistory.ensure(x - 1, y, Down) || moveHistory.isTarget(x - 1, y)) &&
+              (y + 2 != size || !moveHistory.ensure(
+                x - 1,
+                y,
+                Down
+              ) || moveHistory.isTarget(x - 1, y)) &&
               !moveHistory.isTarget(x, y - 1)
             }
 
             def canGoDown = {
               moveHistory.isTarget(x, y - 1) &&
               (x < size - 1 || moveHistory.isTarget(x, y)) &&
-              (moveHistory.isTarget(x - 1, y) || moveHistory.ensureNot(x - 1, y, Down))
+              (moveHistory
+                 .isTarget(x - 1, y) || moveHistory.ensureNot(x - 1, y, Down))
             }
 
             val subSum = traverseMoves // Random .shuffle(traverseMoves)
@@ -242,7 +245,8 @@ object Euler393 {
         if (y > 1) {
           val key = {
             StateKey(
-              moveHistory.getEncodedRow(y - 2)<<32 | moveHistory.getEncodedRow(y - 1),
+              moveHistory.getEncodedRow(y - 2) << 32 | moveHistory
+                .getEncodedRow(y - 1),
               y
             )
           }
@@ -253,10 +257,12 @@ object Euler393 {
             )
 
           }
-          val fromCache = subResultCache.getOrElseUpdate(key, {
-            cacheMisses += 1
-            evalFromHere
-          })
+          val fromCache = subResultCache.getOrElseUpdate(
+            key, {
+              cacheMisses += 1
+              evalFromHere
+            }
+          )
           fromCache
         } else {
           evalFromHere

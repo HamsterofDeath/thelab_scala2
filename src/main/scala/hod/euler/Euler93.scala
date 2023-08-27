@@ -4,13 +4,12 @@ import scala.util.Try
 
 object Euler93 {
   type Calculation = (Double, Double) => Double
-  val Add: Calculation = (a,b) => a+b
-  val Mul: Calculation = (a,b) => a*b
-  val Div: Calculation = (a,b) => a/b
-  val Sub: Calculation = (a,b) => a-b
-  val DivFlip: Calculation = (a,b) => b/a
-  val SubFlip: Calculation = (a,b) => b-a
-
+  val Add    : Calculation = (a, b) => a + b
+  val Mul    : Calculation = (a, b) => a * b
+  val Div    : Calculation = (a, b) => a / b
+  val Sub    : Calculation = (a, b) => a - b
+  val DivFlip: Calculation = (a, b) => b / a
+  val SubFlip: Calculation = (a, b) => b - a
 
   def main(args: Array[String]): Unit = {
     val solution = measured {
@@ -53,8 +52,10 @@ object Euler93 {
     println(s"Solution: $solution")
   }
 
-  private def calculateConfiguration(digits: List[Int],
-                                     calc: List[Calculation]) = {
+  private def calculateConfiguration(
+                                      digits: List[Int],
+                                      calc: List[Calculation]
+                                    ) = {
     val concreteResults = {
       Try {
         val first = calc(0)(digits(0), digits(1))

@@ -18,7 +18,9 @@ public class Euler27 {
 
                 if (count > maxPrimeCount) {
                     coEfficient = a * b;
-                    System.out.println("a = " + a + ",b = " + b + ", primes = " + count + ", coeff: " + coEfficient);
+                    System.out.println(
+                            "a = " + a + ",b = " + b + ", primes = " + count + ", coeff: " +
+                            coEfficient);
                     maxPrimeCount = count;
                 }
             }

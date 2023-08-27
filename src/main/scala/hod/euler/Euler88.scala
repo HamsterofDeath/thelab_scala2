@@ -60,24 +60,29 @@ object Euler88 {
   def attempt(format: Int*): PartialAttempt = {
     val pairs = {
       format
-      .groupBy(identity)
-      .mapValues(_.size)
-      .map { case (number, count) =>
-        Pair(number, count)
-      }
+        .groupBy(identity)
+        .mapValues(_.size)
+        .map {
+          case (number, count) =>
+            Pair(number, count)
+        }
     }
     PartialAttempt(pairs.toList)
   }
 
-  def attempt(map:Map[Int, Int]): Attempt = {
-    PartialAttempt(map.map { case (number, count) =>
-      Pair(number, count)
+  def attempt(map: Map[Int, Int]): Attempt = {
+    PartialAttempt(map.map {
+      case (number, count) =>
+        Pair(number, count)
     }.toList).complete
   }
 
   case class Key(parameters: Int*)
 
-  def findSolutions(target: Int, factors: IndexedSeq[Int]): Foreach[Map[Int, Int]] = {
+  def findSolutions(
+                     target: Int,
+                     factors: IndexedSeq[Int]
+                   ): Foreach[Map[Int, Int]] = {
 
     new Foreach[Map[Int, Int]] {
       override def foreach[U](f: Map[Int, Int] => U): Unit = {
@@ -85,21 +90,20 @@ object Euler88 {
 
         def recur(leftOver: Int, pool: IndexedSeq[Int]): Unit = {
           if (leftOver > 1) {
-            pool
-              .iterator
+            pool.iterator
               .filter { e =>
                 e <= leftOver && leftOver % e == 0
               }
-            .foreach { nextFactor =>
-              val where = pool.indexOf(nextFactor)
-              if (where >= 0) {
-                val value = pool(where)
-                val newLeftOver = leftOver / value
-                workOn.getOrElseUpdate(value, new IntVar(0)).inc()
-                recur(newLeftOver, pool.drop(where))
-                workOn(value).dec()
-              }
-            }
+                .foreach { nextFactor =>
+                  val where = pool.indexOf(nextFactor)
+                  if (where >= 0) {
+                    val value       = pool(where)
+                    val newLeftOver = leftOver / value
+                    workOn.getOrElseUpdate(value, new IntVar(0)).inc()
+                    recur(newLeftOver, pool.drop(where))
+                    workOn(value).dec()
+                  }
+                }
           } else {
             val solution = {
               workOn
@@ -129,7 +133,8 @@ object Euler88 {
         if (sample.length >= 2 && sample.length <= upperLimit) {
           smallest.get(sample.length) match {
             case None => smallest.put(sample.length, sample)
-            case Some(old) if old.sumProduct > sample.sumProduct => smallest.put(sample.length, sample)
+            case Some(old) if old.sumProduct > sample.sumProduct =>
+              smallest.put(sample.length, sample)
             case _ => // nop
           }
         }
@@ -153,24 +158,21 @@ object Euler88 {
     }
 
     def explain = {
-      smallest
-      .toList
-      .sortBy(_._1)
-      .map(_._2.format)
-      .mkString("\n")
+      smallest.toList
+              .sortBy(_._1)
+              .map(_._2.format)
+              .mkString("\n")
     }
     //prIntln(explain)
 
     def mpsn(n: Int) = {
-      smallest
-      .iterator
-      .filter(_._1 <= n)
-      .map(_._2.sumProduct)
-      .toSet
-      .sum
+      smallest.iterator
+              .filter(_._1 <= n)
+              .map(_._2.sumProduct)
+              .toSet
+              .sum
     }
 
     println(mpsn(upperLimit))
   }
 }
-

@@ -13,11 +13,12 @@ object Euler146 {
     val correctNs = measured {
       Iterator
         .from(10, 10)
-        .filterNot { n => n%3==0 ||n%7==0 || n%13==0}
+        .filterNot { n => n % 3 == 0 || n % 7 == 0 || n % 13 == 0 }
         .takeWhile(_ <= 150000000)
         .map { n =>
           n.toLong * n
-      } .toList
+        }
+        .toList
         .par
         .filter { nSqr =>
           if (counter.getAndIncrement() % 100000 == 0) print('.')
@@ -29,7 +30,8 @@ object Euler146 {
           checkNotPrime.forall { add =>
             !(bigInt + add).isProbablePrime(certainty)
           }
-        }.map(_.sqrtNatural)
+        }
+        .map(_.sqrtNatural)
     }
 
     println(correctNs.sum)

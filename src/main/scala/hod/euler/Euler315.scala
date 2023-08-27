@@ -14,9 +14,9 @@ object Euler315 {
       List(1, 2, 3, 4, 5, 6, 7),
       List(1, 2, 3, 4, 5, 7)
     ).map { barIds =>
-      var bits=0
+      var bits = 0
       barIds.foreach { digit =>
-        bits |= 1<<digit
+        bits |= 1 << digit
       }
       bits
     }

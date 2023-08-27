@@ -1,12 +1,5 @@
 package hod.euler
 
-import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
-import javax.swing.SingleSelectionModel
-import scala.collection.IterableOnce.iterableOnceExtensionMethods
-import scala.collection.immutable.BitSet
-import scala.collection.parallel.CollectionConverters.seqIsParallelizable
-import scala.util.Random
-
 object Euler201 {
   def main(args: Array[String]): Unit = {
 
@@ -19,7 +12,7 @@ object Euler201 {
     val numbers = realCase
     val indexOfNumber = {
       val data = numbers.zipWithIndex.toMap
-      Array.tabulate(data.keys.max+1)(data.getOrElse(_,-1))
+      Array.tabulate(data.keys.max + 1)(data.getOrElse(_, -1))
     }
 
     val setSize = numbers.size
@@ -100,7 +93,6 @@ object Euler201 {
     case object Single extends PathType
     case object Multi extends PathType
 
-
     val hack = collection.mutable.HashMap.empty[(Int, Int, Int), PathType]
     def pathTypeToSum(
         sum: Int,
@@ -110,7 +102,7 @@ object Euler201 {
     ): PathType = {
       if (duplicateNotYetFound) {
 
-      def evaluate = {
+        def evaluate = {
           if (using == numbers.head) {
             val endReached =
               (sum == using && stepsLeft == 1 || sum == 0 && stepsLeft == 0)
@@ -142,7 +134,9 @@ object Euler201 {
     }
 
     def pathTypeOf(sum: Int) =
-      if (hasAnyPath(sum)) pathTypeToSum(sum, numbers.last, combinationSize, true) else Undefined
+      if (hasAnyPath(sum))
+        pathTypeToSum(sum, numbers.last, combinationSize, true)
+      else Undefined
 
     def backTrack(sum: Int, using: Int): List[List[Int]] = {
       if (isSummableUsing(sum, using)) {
@@ -183,7 +177,7 @@ object Euler201 {
       var counter = 0
       val ret = (minSum to maxSum).filter { sum =>
         counter += 1
-        if (counter%1000==0) {
+        if (counter % 1000 == 0) {
           print('.')
         }
         val uniquenessType = pathTypeOf(sum)

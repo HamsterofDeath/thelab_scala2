@@ -74,8 +74,14 @@ object Euler96 {
 
     def myBitSet: MyBitSet = new RawLongBits(0)
 
-    class Cell(var number: Int, var row: Row, var col: Col, var block: Block, val indexInArray: Int) {
-      private var freeNumbersInvalid  = true
+    class Cell(
+                var number: Int,
+                var row: Row,
+                var col: Col,
+                var block: Block,
+                val indexInArray: Int
+              ) {
+      private var freeNumbersInvalid = true
       private val freeNumbersVolatile = myBitSet
 
       def invalidateFreeNumbers() {
@@ -99,7 +105,8 @@ object Euler96 {
         number = 0
       }
 
-      override def toString: String = number + "@" + (1 + indexInArray % 9) + "/" + (1 + indexInArray / 9)
+      override def toString: String =
+        number + "@" + (1 + indexInArray % 9) + "/" + (1 + indexInArray / 9)
 
       def freeNumbers: MyBitSet = {
         if (freeNumbersInvalid) {
@@ -112,11 +119,15 @@ object Euler96 {
         freeNumbersVolatile
       }
 
-      def myReferences: Iterable[NineCells] = new Iterable[NineCells] {
-        override def iterator: Iterator[NineCells] = Iterator(row, col, block)
-      }
+      def myReferences: Iterable[NineCells] =
+        new Iterable[NineCells] {
+          override def iterator: Iterator[NineCells] = Iterator(row, col, block)
+        }
     }
-    abstract class NineCells(val cells: Array[Cell], val free: MyBitSet = nineBitSet) {
+    abstract class NineCells(
+                              val cells: Array[Cell],
+                              val free: MyBitSet = nineBitSet
+                            ) {
       def notifyNumberUnset(number: Int) {
         free.on(number)
         cells.foreach(_.invalidateFreeNumbers())
@@ -148,22 +159,30 @@ object Euler96 {
         col.foreach(_.col = Col.this)
       }
     }
-    class Sudoku(val cells: Array[Cell], val rows: Array[Row], val cols: Array[Col], val blocks: Array[Block]) {
+    class Sudoku(
+                  val cells: Array[Cell],
+                  val rows: Array[Row],
+                  val cols: Array[Col],
+                  val blocks: Array[Block]
+                ) {
       private var openCellCount = 81
 
-      def checkSum: Int = cells(0).number * 100 + cells(1).number * 10 + cells(2).number
+      def checkSum: Int =
+        cells(0).number * 100 + cells(1).number * 10 + cells(2).number
 
-      def pretty: String = rows.map(_.cells.map(_.number).mkString).mkString("\n")
+      def pretty: String =
+        rows.map(_.cells.map(_.number).mkString).mkString("\n")
 
       def isSolved: Boolean = openCellCount == 0
 
-      def allNines = new Foreach[NineCells] {
-        def foreach[U](f: NineCells => U) {
-          rows.foreach(f)
-          cols.foreach(f)
-          blocks.foreach(f)
+      def allNines =
+        new Foreach[NineCells] {
+          def foreach[U](f: NineCells => U) {
+            rows.foreach(f)
+            cols.foreach(f)
+            blocks.foreach(f)
+          }
         }
-      }
 
       def setNumber(index: Int, number: Int) {
         cells(index).setNumber(number)
@@ -196,12 +215,20 @@ object Euler96 {
     }
 
     def parse(raw: String) = {
-      val rowsConcatenated = raw.zipWithIndex.map(char => new Cell(char._1.getNumericValue, char._2)).toArray
+      val rowsConcatenated = raw.zipWithIndex
+                                .map(char => new Cell(char._1.getNumericValue, char._2))
+                                .toArray
       val rows = rowsConcatenated.grouped(9).map(nine => new Row(nine)).toArray
-      val cols = (0 to 8).map(col => new Col(rowsConcatenated.drop(col).sliding(1, 9).flatten.toArray)).toArray
+      val cols             = (0 to 8)
+        .map(col =>
+          new Col(rowsConcatenated.drop(col).sliding(1, 9).flatten.toArray)
+        )
+        .toArray
       val blocks = {
-        val cellGroups = for (block <- 0 to 8) yield block2Area(block)
-                                                     .map(indices => rowsConcatenated(indices))
+        val cellGroups =
+          for (block <- 0 to 8)
+            yield block2Area(block)
+              .map(indices => rowsConcatenated(indices))
         for (nine <- cellGroups) yield new Block(nine.iterator.toArray)
       }
       val sudoku = new Sudoku(rowsConcatenated, rows, cols, blocks.toArray)
@@ -214,11 +241,13 @@ object Euler96 {
       if (!sudoku.isSolved) {
         val myMove = {
           def nextMove: Cell = {
-            sudoku.cells.iterator.filterNot(_.isNumberSet).minBy(e => {
-              val size = e.freeNumbers.bitCount
-              if (size == 1) return e
-              if (size == 0) 10 else size
-            })
+            sudoku.cells.iterator
+                  .filterNot(_.isNumberSet)
+                  .minBy(e => {
+                    val size = e.freeNumbers.bitCount
+                    if (size == 1) return e
+                    if (size == 0) 10 else size
+                  })
           }
 
           nextMove
@@ -244,8 +273,7 @@ object Euler96 {
 
     val sum = {
       val groupedToFields = {
-        new File("resource/sudoku.txt")
-          .slurp
+        new File("resource/sudoku.txt").slurp
           .sliding(10, 10)
           .map { tenLines =>
             tenLines.drop(1).mkString

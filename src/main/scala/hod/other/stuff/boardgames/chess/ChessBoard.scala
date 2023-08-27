@@ -1,12 +1,16 @@
 package hod.other.stuff.boardgames.chess
 
-import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState, GameContext, Move, MutableBoard, OutcomeNotDetermined,
-  WinnerDetermined}
+import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState,
+  GameContext, Move, MutableBoard, OutcomeNotDetermined, WinnerDetermined}
 
 abstract case class Piece(value: Int) {
   def pieceName = getClass.getSimpleName
 
-  def targetsOn(field: FieldWrapper, currentPlayer: Player, pieceLocation: Location): Iterator[ChessMove]
+  def targetsOn(
+                 field: FieldWrapper,
+                 currentPlayer: Player,
+                 pieceLocation: Location
+               ): Iterator[ChessMove]
 
 }
 class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
@@ -18,7 +22,13 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
     isValid(location) && (isFree(location) || isOccupiedBy(location, owner))
   }
 
-  private def pathUntil(pieceLocation: Location, xShift: Int, yShift: Int, canAttack: Player, infinite: Boolean): Iterator[Location] = {
+  private def pathUntil(
+                         pieceLocation: Location,
+                         xShift: Int,
+                         yShift: Int,
+                         canAttack: Player,
+                         infinite: Boolean
+                       ): Iterator[Location] = {
     var cursor = pieceLocation
 
     def shifted = {
@@ -28,22 +38,23 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
 
     val endless = {
       var firstContact = false
-      Iterator.continually(shifted)
-              .takeWhile { locationToCheck =>
-                if (isValid(locationToCheck) && !firstContact) {
-                  if (isFree(locationToCheck)) {
-                    true
-                  } else {
-                    val moveOn = isOccupiedBy(locationToCheck, canAttack)
-                    if (moveOn) {
-                      firstContact = true
-                    }
-                    moveOn
-                  }
-                } else {
-                  false
-                }
+      Iterator
+        .continually(shifted)
+        .takeWhile { locationToCheck =>
+          if (isValid(locationToCheck) && !firstContact) {
+            if (isFree(locationToCheck)) {
+              true
+            } else {
+              val moveOn = isOccupiedBy(locationToCheck, canAttack)
+              if (moveOn) {
+                firstContact = true
               }
+              moveOn
+            }
+          } else {
+            false
+          }
+        }
     }
     if (infinite) {
       endless
@@ -52,7 +63,13 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
     }
   }
 
-  def pathsFrom(pieceLocation: Location, lrud: Boolean, diagonal: Boolean, infiniteRange: Boolean, pieceOwner: Player): Iterator[Location] = {
+  def pathsFrom(
+                 pieceLocation: Location,
+                 lrud: Boolean,
+                 diagonal: Boolean,
+                 infiniteRange: Boolean,
+                 pieceOwner: Player
+               ): Iterator[Location] = {
     val enemy           = pieceOwner.otherPlayer
     val leftRightUpDown = {
       if (lrud) {
@@ -104,9 +121,11 @@ class FieldWrapper(field: Array[Array[Option[PieceOfPlayer]]]) {
 
 }
 object Pawn extends Piece(1) {
-  override def targetsOn(field: FieldWrapper,
-                         currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
     def pawnMoves(down: Boolean, startY: Int) = {
       val directionFactor = if (down) 1 else -1
       val oneForward      = pieceLocation.moved(0, 1 * directionFactor)
@@ -178,42 +197,63 @@ object Horse extends Piece(3) {
       (-2, -1)
     )
   }
-  override def targetsOn(field: FieldWrapper, currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
-    relativeTargets.iterator.map { shift =>
-      pieceLocation.moved(shift._1, shift._2)
-    }.filter(field.isValidAndFreeOrOccupiedBy(_, currentPlayer.otherPlayer))
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
+    relativeTargets.iterator
+                   .map { shift =>
+                     pieceLocation.moved(shift._1, shift._2)
+                   }
+                   .filter(field.isValidAndFreeOrOccupiedBy(_, currentPlayer.otherPlayer))
                    .map(field.locationToMove(pieceLocation, _))
   }
 }
 object Bishop extends Piece(3) {
-  override def targetsOn(field: FieldWrapper, currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
-    field.pathsFrom(pieceLocation, false, true, true, currentPlayer)
-         .map(field.locationToMove(pieceLocation, _))
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
+    field
+      .pathsFrom(pieceLocation, false, true, true, currentPlayer)
+      .map(field.locationToMove(pieceLocation, _))
   }
 
 }
 object Tower extends Piece(5) {
-  override def targetsOn(field: FieldWrapper, currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
-    field.pathsFrom(pieceLocation, true, false, true, currentPlayer)
-         .map(field.locationToMove(pieceLocation, _))
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
+    field
+      .pathsFrom(pieceLocation, true, false, true, currentPlayer)
+      .map(field.locationToMove(pieceLocation, _))
   }
 
 }
 object Queen extends Piece(10) {
-  override def targetsOn(field: FieldWrapper, currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
-    field.pathsFrom(pieceLocation, true, true, true, currentPlayer)
-         .map(field.locationToMove(pieceLocation, _))
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
+    field
+      .pathsFrom(pieceLocation, true, true, true, currentPlayer)
+      .map(field.locationToMove(pieceLocation, _))
   }
 }
 object King extends Piece(9999) {
-  override def targetsOn(field: FieldWrapper, currentPlayer: Player,
-                         pieceLocation: Location): Iterator[ChessMove] = {
-    field.pathsFrom(pieceLocation, true, true, false, currentPlayer)
-         .map(field.locationToMove(pieceLocation, _))
+  override def targetsOn(
+                          field: FieldWrapper,
+                          currentPlayer: Player,
+                          pieceLocation: Location
+                        ): Iterator[ChessMove] = {
+    field
+      .pathsFrom(pieceLocation, true, true, false, currentPlayer)
+      .map(field.locationToMove(pieceLocation, _))
   }
 }
 
@@ -237,11 +277,15 @@ case class Location(x: Int, y: Int) {
   }
 
 }
-case class ChessMove(from: Location, to: Location, taken: Option[PieceOfPlayer]) extends Move
+case class ChessMove(from: Location, to: Location, taken: Option[PieceOfPlayer])
+  extends Move
 case class PieceOfPlayer(piece: Piece, owner: Player) {
   def print = s"${piece.pieceName} of $owner"
 
-  def allMovesOnBoard(field: FieldWrapper, pieceLocation: Location): Iterator[ChessMove] = {
+  def allMovesOnBoard(
+                       field: FieldWrapper,
+                       pieceLocation: Location
+                     ): Iterator[ChessMove] = {
     piece.targetsOn(field, owner, pieceLocation).iterator
   }
 }
@@ -321,7 +365,9 @@ class ChessBoard extends MutableBoard[ChessMove] {
   private val wrappedField = new FieldWrapper(field)
 
   def checkWinner(): Unit = {
-    val kings = allLocations.flatMap(e => pieceAt(e.x, e.y).filter(_.piece == King)).toList
+    val kings = allLocations
+      .flatMap(e => pieceAt(e.x, e.y).filter(_.piece == King))
+      .toList
     kings.size match {
       case 2 => winner = None
       case 1 => winner = Some(kings.head.owner)
@@ -384,23 +430,26 @@ object ChessPrinter extends BoardPrinter[ChessMove, ChessBoard] {
   override def printMove(move: ChessMove, board: ChessBoard): String = {
     val piece = board.pieceAt(move.from.x, move.from.y).get
     val eaten = board.pieceAt(move.to.x, move.to.y)
-    s"${piece.piece.pieceName} of ${piece.owner} from ${move.from.print} to ${move.to.print}, taking ${eaten.map(_.print).getOrElse("nothing")}"
+    s"${piece.piece.pieceName} of ${piece.owner} from ${move.from.print} to ${move.to.print}, " +
+    s"taking ${eaten.map(_.print).getOrElse("nothing")}"
   }
 
   override def printBoard(board: ChessBoard): String = {
-    (0 to 7).map { y =>
-      (0 to 7).map { x =>
-        board.pieceAt(x, y) match {
-          case Some(pieceAndOwner) =>
-            val name = pieceAndOwner.piece.pieceName
-            pieceAndOwner.owner match {
-              case White => name.toUpperCase.padTo(8, ' ')
-              case Black => name.toLowerCase.padTo(8, ' ')
-            }
-          case None => "        "
-        }
-      }.mkString
-    }.mkString("\n")
+    (0 to 7)
+      .map { y =>
+        (0 to 7).map { x =>
+          board.pieceAt(x, y) match {
+            case Some(pieceAndOwner) =>
+              val name = pieceAndOwner.piece.pieceName
+              pieceAndOwner.owner match {
+                case White => name.toUpperCase.padTo(8, ' ')
+                case Black => name.toLowerCase.padTo(8, ' ')
+              }
+            case None => "        "
+          }
+        }.mkString
+      }
+      .mkString("\n")
   }
 }
 

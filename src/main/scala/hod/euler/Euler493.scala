@@ -3,9 +3,9 @@ package hod.euler
 import scala.collection.mutable
 
 object Euler493 {
-  val poolSize                    = 70
-  val colors                      = 7
-  val picks                       = 20
+  val poolSize = 70
+  val colors   = 7
+  val picks    = 20
   val initialOptionsPerColor: Int = poolSize / colors
 
   case class Snapshot(data: collection.Map[Int, Int])
@@ -36,8 +36,10 @@ object Euler493 {
     }
     private val untouched      = Array.tabulate(7)(_ => true)
     private var remainingPicks = picks
-    def untouchedColors: Iterator[Int] = untouched.iterator.zipWithIndex.filter(_._1).map(_._2)
-    def touchedColors: Iterator[Int] = untouched.iterator.zipWithIndex.filterNot(_._1).map(_._2)
+    def untouchedColors: Iterator[Int] =
+      untouched.iterator.zipWithIndex.filter(_._1).map(_._2)
+    def touchedColors: Iterator[Int] =
+      untouched.iterator.zipWithIndex.filterNot(_._1).map(_._2)
     def optionsForNewColor: Int = untouchedColors.size * initialOptionsPerColor
     def optionsForOldColor: Int = touchedColors.map(openAtColor).sum
   }
@@ -48,8 +50,10 @@ object Euler493 {
     def recur(details: State): Double = {
       if (details.picksLeft) {
         def eval = {
-          val chanceForNewColorPick = details.optionsForNewColor.toDouble / details.remainingOptions
-          val chanceForOldColorPick = details.optionsForOldColor.toDouble / details.remainingOptions
+          val chanceForNewColorPick =
+            details.optionsForNewColor.toDouble / details.remainingOptions
+          val chanceForOldColorPick =
+            details.optionsForOldColor.toDouble / details.remainingOptions
 
           def evalSubProblem(color: Int): Double = {
             details.pick(color)
@@ -63,14 +67,18 @@ object Euler493 {
 
           val expectedColorsIfPickingNew = {
             if (untouchedCount > 0) {
-              details.untouchedColors.toList.iterator.map(evalSubProblem).sum / untouchedCount
+              details.untouchedColors.toList.iterator
+                     .map(evalSubProblem)
+                     .sum / untouchedCount
             } else {
               0
             }
           }
           val expectedColorsIfPickingOld = {
             if (touchedCount > 0) {
-              details.touchedColors.toList.iterator.map(evalSubProblem).sum / touchedCount
+              details.touchedColors.toList.iterator
+                     .map(evalSubProblem)
+                     .sum / touchedCount
             } else {
               0
             }
@@ -89,8 +97,7 @@ object Euler493 {
             num
         }
 
-      }
-      else {
+      } else {
         details.distinctColorCount
       }
     }

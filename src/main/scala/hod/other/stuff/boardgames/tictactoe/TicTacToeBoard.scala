@@ -1,7 +1,7 @@
 package hod.other.stuff.boardgames.tictactoe
 
-import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState, GameContext, Move, MovesExhausted, MutableBoard,
-  OutcomeNotDetermined, WinnerDetermined}
+import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPrinter, BoardRating, BoardState,
+  GameContext, Move, MovesExhausted, MutableBoard, OutcomeNotDetermined, WinnerDetermined}
 
 case class PlaceMarker(x: Int, y: Int, player: Int) extends Move
 class TicTacToeBoard extends MutableBoard[PlaceMarker] {
@@ -9,10 +9,11 @@ class TicTacToeBoard extends MutableBoard[PlaceMarker] {
 
   def playerOn(x: Int, y: Int) = data(x)(y)
 
-  def otherPlayer: Int = currentTurnPlayer match {
-    case 1 => 2
-    case 2 => 1
-  }
+  def otherPlayer: Int =
+    currentTurnPlayer match {
+      case 1 => 2
+      case 2 => 1
+    }
 
   def rateSelfAsSeenFromPlayerOne(): Int = {
 
@@ -103,22 +104,31 @@ object TicTacToeRating extends BoardRating[PlaceMarker, TicTacToeBoard] {
 
 object TicTacToePrinter extends BoardPrinter[PlaceMarker, TicTacToeBoard] {
   override def printBoard(board: TicTacToeBoard): String = {
-    (0 to 2).map { y =>
-      (0 to 2).map { x =>
-        board.playerOn(x, y) match {
-          case 0 => " "
-          case 1 => "X"
-          case 2 => "O"
-        }
-      }.mkString
-    }.mkString("\n")
+    (0 to 2)
+      .map { y =>
+        (0 to 2).map { x =>
+          board.playerOn(x, y) match {
+            case 0 => " "
+            case 1 => "X"
+            case 2 => "O"
+          }
+        }.mkString
+      }
+      .mkString("\n")
   }
 }
 
 object TicTacToeBoard {
   def main(args: Array[String]): Unit = {
     val board = new TicTacToeBoard
-    val ctx   = new GameContext[PlaceMarker, TicTacToeBoard](board, 10, None, TicTacToeRating, TicTacToePrinter, true)
+    val ctx   = new GameContext[PlaceMarker, TicTacToeBoard](
+      board,
+      10,
+      None,
+      TicTacToeRating,
+      TicTacToePrinter,
+      true
+    )
     AutoPlay.playTwoPlayerGame(ctx)
   }
 }

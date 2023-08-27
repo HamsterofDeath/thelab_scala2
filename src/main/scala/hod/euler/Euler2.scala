@@ -9,7 +9,8 @@ object Euler2 {
       start._2
     }
 
-    val fibs     = Iterator.single(1) ++ Iterator.single(2) ++ Iterator.continually(next)
+    val fibs =
+      Iterator.single(1) ++ Iterator.single(2) ++ Iterator.continually(next)
     val solution = fibs.filter(_ % 2 == 0).takeWhile(_ <= 4000000).sum
     println(solution)
   }
@@ -17,19 +18,19 @@ object Euler2 {
 
 object Euler2Rec {
   def main(args: Array[String]): Unit = {
-    def fib(a:Int, b:Int, limit:Int):Int = {
-      val next = a+b
-      if (next>limit) {
+    def fib(a: Int, b: Int, limit: Int): Int = {
+      val next = a + b
+      if (next > limit) {
         0
       } else {
-        val sumRemaining = fib(b,next,limit)
+        val sumRemaining = fib(b, next, limit)
         val currentValueIfEven = if (next % 2 == 0) next else 0
         sumRemaining + currentValueIfEven
       }
 
     }
 
-    println(fib(1,1,4000000))
+    println(fib(1, 1, 4000000))
   }
 }
 
@@ -50,4 +51,3 @@ object Euler2CStyle {
 
   }
 }
-

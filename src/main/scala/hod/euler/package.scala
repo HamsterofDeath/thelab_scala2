@@ -1,13 +1,13 @@
 package hod
 
-import hod.euler.{gcdEuclid, isReducedProperFraction}
-
 import java.io.{BufferedInputStream, BufferedReader, DataInputStream, DataOutputStream, EOFException, File, FileInputStream, FileOutputStream, FileReader}
 import java.math.{BigInteger, MathContext, RoundingMode}
 import java.text.{DecimalFormat, DecimalFormatSymbols}
 import java.util.concurrent.Executors
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+
+import hod.euler.{gcdEuclid, isReducedProperFraction}
 
 package object euler {
 
@@ -28,7 +28,6 @@ package object euler {
     }
   }
 
-
   def factorial(n: Int): BigInt = {
     factorials.getOrElseUpdate(
       n, {
@@ -48,7 +47,7 @@ package object euler {
     val zero = BigDecimal(0, mc)
     def deepDive(remaining: Int): BigDecimal = {
       val next = BigDecimal(fractions.next(), mc)
-      val step =  {
+      val step = {
         if (remaining > 0) {
           one / deepDive(remaining - 1)
         } else {
@@ -62,7 +61,7 @@ package object euler {
 
   def euler(terms: Int, precision: Int) = {
     val fractions =
-      Iterator.from(1).flatMap(n => Iterator(1, n * 2,1))
+      Iterator.from(1).flatMap(n => Iterator(1, n * 2, 1))
     approximate(2, fractions, terms, precision)
   }
 
@@ -120,7 +119,7 @@ package object euler {
     bench("Stuff")(t)
   }
 
-  def bench[T](name:String)(t: => T) = {
+  def bench[T](name: String)(t: => T) = {
     println(s"Operation '$name' start")
     val start = System.nanoTime()
     val ret = t
@@ -247,8 +246,7 @@ package object euler {
 
   def primeFactorsOf(n: Long): Iterator[Long] = {
     var remaining = n
-    allPrimesCached
-      .iterator
+    allPrimesCached.iterator
       .takeWhilePlusOne(_ => remaining > 1)
       .flatMap { prime =>
         Iterator
@@ -263,8 +261,7 @@ package object euler {
   }
   def primeFactorsOf(n: BigInt): Iterator[Long] = {
     var remaining = n
-    allPrimesCached
-      .iterator
+    allPrimesCached.iterator
       .takeWhilePlusOne(_ => remaining > 1)
       .flatMap { prime =>
         Iterator
@@ -416,7 +413,7 @@ package object euler {
 
   implicit class LongOps(val l: Long) extends AnyVal {
 
-    def sqr = l*l
+    def sqr = l * l
 
     def nice = {
       val sym = new DecimalFormatSymbols()
@@ -433,9 +430,9 @@ package object euler {
         case _ =>
           var ret = l
           var i = 1
-          while (i<n) {
+          while (i < n) {
             ret *= l
-            i+=1
+            i += 1
           }
           ret
       }
@@ -447,9 +444,9 @@ package object euler {
         case _ =>
           var ret = BigInt(l)
           var i = 1
-          while (i<n) {
+          while (i < n) {
             ret *= l
-            i+=1
+            i += 1
           }
           ret
       }
@@ -727,7 +724,6 @@ package object euler {
     min
   }
 
-
 }
 
 object EulerUtils {
@@ -757,8 +753,9 @@ object EulerUtils {
     true
   }
 
-  def isReducedProperFractionJ(n: Int, d: Int): Boolean = isReducedProperFraction(n,d)
+  def isReducedProperFractionJ(n: Int, d: Int): Boolean =
+    isReducedProperFraction(n, d)
 
-  def gcdEuclidJ(a: Int, b: Int) = gcdEuclid(a,b)
+  def gcdEuclidJ(a: Int, b: Int) = gcdEuclid(a, b)
 
 }

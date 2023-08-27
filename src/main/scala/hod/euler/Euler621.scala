@@ -64,8 +64,11 @@ object Euler621 {
         (0 to maxIndex).par.map { i =>
           progress += 1
           if (progress % 100 == 0) {
-            val elapsed = s"${df.format((System.nanoTime() - start) / 1000000000.0 / 60)} min"
-            println(s"$progress / $maxIndex, ${df.format(progress / maxIndex.toDouble)}% in $elapsed")
+            val elapsed =
+              s"${df.format((System.nanoTime() - start) / 1000000000.0 / 60)} min"
+            println(
+              s"$progress / $maxIndex, ${df.format(progress / maxIndex.toDouble)}% in $elapsed"
+            )
           }
           val asTri = toTriNum(i)
           val remainder = maxLimit - asTri
@@ -75,12 +78,12 @@ object Euler621 {
 
       val solution = countSolutions
       val end = System.nanoTime()
-      println(s"Solutions = $solution in ${df.format((end - start) / 1000000000.0 / 60)} min")
+      println(
+        s"Solutions = $solution in ${df.format((end - start) / 1000000000.0 / 60)} min"
+      )
     }
 
     //    solveFor(1000000)
     solveFor(target)
   }
 }
-
-

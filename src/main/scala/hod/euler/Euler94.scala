@@ -10,7 +10,7 @@ object Euler94 {
 
     Iterator
       .from(2)
-      .flatMap(side => List((side, side-1), (side, side+1)))
+      .flatMap(side => List((side, side - 1), (side, side + 1)))
       .filter(_._2 % 2 == 0)
       .takeWhile {
         case (sides, bottom) => sides + sides + bottom <= 1000000000

@@ -1,5 +1,4 @@
 package hod.euler
-import collection.parallel.CollectionConverters._
 
 object Euler166 {
   def main(args: Array[String]): Unit = {
@@ -8,8 +7,8 @@ object Euler166 {
 
       def generate(row: Int, col: Int): Int = {
         if (row == 4) {
-          if (sumUpTo==2) {
-            println(data.map(_.mkString(",")).mkString("\n")+"\n")
+          if (sumUpTo == 2) {
+            println(data.map(_.mkString(",")).mkString("\n") + "\n")
           }
           1
         } else {
@@ -58,10 +57,22 @@ object Euler166 {
             def nextCol = if (col == 3) 0 else col + 1
             val counts = {
               val continue = {
-                val rowOk = col < 3 || data(row)(0) + data(row)(1) + data(row)(2) + data(row)(3) == sumUpTo
-                val colOk = row < 3 || data(0)(col) + data(1)(col) + data(2)(col) + data(3)(col) == sumUpTo
-                val diag1Ok = col < 3 || row < 3 || data(0)(0) + data(1)(1) + data(2)(2) + data(3)(3) == sumUpTo
-                val diag2Ok = col > 0 || row < 3 || data(0)(3) + data(1)(2) + data(2)(1) + data(3)(0) == sumUpTo
+                val rowOk   =
+                  col < 3 || data(row)(0) + data(row)(1) + data(row)(2) + data(
+                    row
+                  )(3) == sumUpTo
+                val colOk   =
+                  row < 3 || data(0)(col) + data(1)(col) + data(2)(col) + data(
+                    3
+                  )(col) == sumUpTo
+                val diag1Ok =
+                  col < 3 || row < 3 || data(0)(0) + data(1)(1) + data(2)(
+                    2
+                  ) + data(3)(3) == sumUpTo
+                val diag2Ok =
+                  col > 0 || row < 3 || data(0)(3) + data(1)(2) + data(2)(
+                    1
+                  ) + data(3)(0) == sumUpTo
                 rowOk && colOk && diag1Ok && diag2Ok
               }
               if (continue) {

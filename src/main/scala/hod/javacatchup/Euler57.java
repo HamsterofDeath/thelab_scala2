@@ -4,7 +4,8 @@ import java.math.BigInteger;
 
 public class Euler57 {
 
-    private static boolean doesTheNumeratorHaveMoreDigits(BigInteger numerator, BigInteger denominator) {
+    private static boolean doesTheNumeratorHaveMoreDigits(BigInteger numerator,
+                                                          BigInteger denominator) {
         final boolean ret = numerator.toString().length() > denominator.toString().length();
         if (ret) {
             System.out.println("these are my numbers " + numerator + " and " + denominator);
@@ -13,7 +14,8 @@ public class Euler57 {
     }
 
     //to either add one or two to the rational number
-    private static BigInteger addXAndGiveNumeratorBack(int x, BigInteger numerator, BigInteger denominator) {
+    private static BigInteger addXAndGiveNumeratorBack(int x, BigInteger numerator,
+                                                       BigInteger denominator) {
         return numerator.add(denominator.multiply(BigInteger.valueOf(x)));
     }
 

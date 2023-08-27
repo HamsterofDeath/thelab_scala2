@@ -1,12 +1,10 @@
 package hod.javacatchup;
 
-import java.util.Arrays;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class Euler34 {
     public static void main(String[] args) {
-        var upperBound = 7*factorial(9);
+        var upperBound = 7 * factorial(9);
         IntStream.range(3, upperBound).filter(Euler34::isInteresting).forEach(System.out::println);
     }
 
@@ -20,6 +18,6 @@ public class Euler34 {
     }
 
     private static int factorial(int n) {
-        if (n==0) return 1; else return n*factorial(n-1);
+        if (n == 0) {return 1;} else return n * factorial(n - 1);
     }
 }

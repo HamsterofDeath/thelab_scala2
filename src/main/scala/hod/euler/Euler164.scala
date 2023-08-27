@@ -5,7 +5,8 @@ object Euler164 {
     val maxDigits = 20
 
     val hack = collection.mutable.HashMap.empty[(String, Int), BigInt]
-    def recur(current:BigInt, index:Int):BigInt = {
+
+    def recur(current: BigInt, index: Int): BigInt = {
       val endReached = index == maxDigits
       if (endReached) {
         1
@@ -14,13 +15,14 @@ object Euler164 {
         val sumOfPreviousDigits = {
           previousTwoDigits.map(Character.getNumericValue).sum
         }
-        def eval:BigInt = {
+
+        def eval: BigInt = {
           val maxNextDigit = 9 - sumOfPreviousDigits
 
           val minNextDigit = if (index == 0) 1 else 0
           val subSums = for {
             nextDigit <- minNextDigit to maxNextDigit
-          } yield recur(current*10+nextDigit, index + 1)
+          } yield recur(current * 10 + nextDigit, index + 1)
           subSums.sum
         }
         val key = previousTwoDigits
@@ -29,6 +31,6 @@ object Euler164 {
     }
 
     val solution = recur(0, 0)
-    println("smart: "+solution)
+    println("smart: " + solution)
   }
 }

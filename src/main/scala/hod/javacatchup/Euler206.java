@@ -7,9 +7,9 @@ import java.util.stream.Stream;
 
 public class Euler206 {
 
-    private static final String pattern   = "1_2_3_4_5_6_7_8_9_0";
-    private static final String reference = pattern.replaceAll("_", "");
-    private static       AtomicInteger    counter   = new AtomicInteger();
+    private static final String        pattern   = "1_2_3_4_5_6_7_8_9_0";
+    private static final String        reference = pattern.replaceAll("_", "");
+    private static final AtomicInteger counter   = new AtomicInteger();
 
     record Tuple(int digit, int index) {
     }

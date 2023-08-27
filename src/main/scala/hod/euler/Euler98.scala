@@ -4,29 +4,28 @@ import java.io.File
 
 object Euler98 {
   def main(args: Array[String]): Unit = {
-    val file     = new File("resource/p98words.txt")
-    val words    = {
-      file
-        .slurpWhole
+    val file          = new File("resource/p98words.txt")
+    val words         = {
+      file.slurpWhole
         .split(',')
         .map(_.drop(1).dropRight(1))
     }
     val anagrams = {
       words
         .groupBy(_.toSeq.sorted.unwrap)
-      .values
-      .toList
-      .filter(_.length > 1)
+        .values
+        .toList
+        .filter(_.length > 1)
     }
     val maxChars = {
       anagrams
-      .map(_.head.length)
-      .max
+        .map(_.head.length)
+        .max
     }
     val maxValue = {
       math
-      .pow(10, maxChars + 1)
-      .toLong
+        .pow(10, maxChars + 1)
+        .toLong
     }
     val squareNumbers = {
       allSquares
@@ -34,32 +33,36 @@ object Euler98 {
         .map(_.toString)
         .toList
         .groupBy(_.toSeq.sorted.unwrap)
-      .values
-      .toList
-      .filter(_.length > 1)
-      .flatten
-      .groupBy(_.length)
+        .values
+        .toList
+        .filter(_.length > 1)
+        .flatten
+        .groupBy(_.length)
 
     }
     val solutions = {
       def mappingsOf(word: String) = {
         val fittingSquares = squareNumbers.getOrElse(word.length, Nil)
         val possibleMappings = {
-          fittingSquares.map { digits =>
-            word.zip(digits)
-          }.filter { digitToChar =>
-            val digits = digitToChar.map(_._1)
-            val chars = digitToChar.map(_._2)
-            digits.allValuesDistinct &&
-            chars.allValuesDistinct
-          }.map(_.toMap)
+          fittingSquares
+            .map { digits =>
+              word.zip(digits)
+            }
+            .filter { digitToChar =>
+              val digits = digitToChar.map(_._1)
+              val chars  = digitToChar.map(_._2)
+              digits.allValuesDistinct &&
+              chars.allValuesDistinct
+            }
+            .map(_.toMap)
         }
         possibleMappings
       }
 
       anagrams.flatMap { words =>
         val mappings = words.map(mappingsOf)
-        val intersection = mappings.foldLeft(mappings.head)((acc, e) => acc.intersect(e))
+        val intersection =
+          mappings.foldLeft(mappings.head)((acc, e) => acc.intersect(e))
         val good = intersection.nonEmpty
         if (good) {
           Some {
@@ -71,20 +74,22 @@ object Euler98 {
       }
     }
     val withValues = {
-      solutions.flatMap { case (groupOfAnagrams, mappings) =>
-        groupOfAnagrams.map { word =>
-          word -> mappings.map { mapping =>
-            word.map(mapping)
+      solutions.flatMap {
+        case (groupOfAnagrams, mappings) =>
+          groupOfAnagrams.map { word =>
+            word -> mappings.map { mapping =>
+              word.map(mapping)
+            }
           }
-        }
       }
     }
 
     val largest = {
       withValues
-      .maxBy { case (_, squares) =>
-        squares.map(_.toLong).max
-      }
+        .maxBy {
+          case (_, squares) =>
+            squares.map(_.toLong).max
+        }
     }
     println(largest)
   }

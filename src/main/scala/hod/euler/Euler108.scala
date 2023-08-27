@@ -53,5 +53,3 @@ object Euler108 {
     }
   }
 }
-
-

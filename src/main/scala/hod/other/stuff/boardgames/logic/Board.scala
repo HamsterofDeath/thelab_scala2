@@ -26,16 +26,17 @@ trait MoveCacheSupport[M <: Move, B <: Board[M]] {
 }
 
 object MoveCacheSupport {
-  def noSupport[M <: Move, B <: Board[M]]: MoveCacheSupport[M, B] = new MoveCacheSupport[M, B] {
-    override def clear(): Unit = {}
-    override def isCacheSupported(depth: Int): Boolean = false
-    override def store(b: B, rating: Int): Unit =
-      throw new UnsupportedOperationException()
-    override def hasRatingStored(b: B): Boolean =
-      throw new UnsupportedOperationException()
-    override def getRating(b: B): Int =
-      throw new UnsupportedOperationException()
-  }
+  def noSupport[M <: Move, B <: Board[M]]: MoveCacheSupport[M, B] =
+    new MoveCacheSupport[M, B] {
+      override def clear(): Unit = {}
+      override def isCacheSupported(depth: Int): Boolean = false
+      override def store(b: B, rating: Int): Unit =
+        throw new UnsupportedOperationException()
+      override def hasRatingStored(b: B): Boolean =
+        throw new UnsupportedOperationException()
+      override def getRating(b: B): Int =
+        throw new UnsupportedOperationException()
+    }
 }
 
 trait ImmutableBoard[M <: Move] extends Board[M]
@@ -70,7 +71,9 @@ class GameContext[M <: Move, B <: MutableBoard[M]](
                                                     val printer: BoardPrinter[M, B],
                                                     val alphaBetaPruning: Boolean = true,
                                                     val abortOnLoop: Boolean = true,
-                                                    val moveCacheSupport: Option[MoveCacheSupport[M, B]] = None
+                                                    val
+                                                    moveCacheSupport: Option[MoveCacheSupport[M,
+                                                      B]] = None
                                                   ) {
   def printForConsole = {
     printer.printBoard(board)
@@ -95,8 +98,12 @@ class AutoPlayer[M <: Move, B <: MutableBoard[M]] extends BoardPlayer[M, B] {
 object AutoPlay {
   def playTwoPlayerGame[M <: Move, B <: MutableBoard[M]](
                                                           context: GameContext[M, B],
-                                                          firstPlayer: BoardPlayer[M, B] = BoardPlayer.autoPlayer[M, B],
-                                                          secondPlayer: BoardPlayer[M, B] = BoardPlayer.autoPlayer[M, B]
+                                                          firstPlayer: BoardPlayer[M, B] =
+                                                          BoardPlayer
+                                                            .autoPlayer[M, B],
+                                                          secondPlayer: BoardPlayer[M, B] =
+                                                          BoardPlayer
+                                                            .autoPlayer[M, B]
                                                         ): Unit = {
     val moveHistory = mutable.ArrayBuffer.empty[M]
     println(s"Board:\n${context.printForConsole}")
@@ -153,14 +160,21 @@ object MoveTraverse {
                                                        context: GameContext[M, B]
                                                      ): M = {
     val start = System.currentTimeMillis()
-    case class SearchResult(move: M, nodes: Int, leafs: Int, rating: Int, cached: Int, cacheHits: Int)
+    case class SearchResult(
+                             move: M,
+                             nodes: Int,
+                             leafs: Int,
+                             rating: Int,
+                             cached: Int,
+                             cacheHits: Int
+                           )
     def evalWithMaxDepth(depthLimit: Int): SearchResult = {
       val cacheSupport =
         context.moveCacheSupport.getOrElse(MoveCacheSupport.noSupport)
       cacheSupport.clear()
-      var nodes     = 0
-      var leafs     = 0
-      var cached    = 0
+      var nodes  = 0
+      var leafs  = 0
+      var cached = 0
       var cacheHits = 0
 
       def takeUntil[T](it: IterableOnce[T])(continueIf: T => Boolean) = {
@@ -176,14 +190,16 @@ object MoveTraverse {
         }
       }
 
-      val rating    = context.rating
+      val rating = context.rating
       val situation = context.board
 
-      def valueOfMove(move: M,
-                      remainingDepth: Int,
-                      maximizingPlayersTurn: Boolean,
-                      alpha: Int,
-                      beta: Int): Int = {
+      def valueOfMove(
+                       move: M,
+                       remainingDepth: Int,
+                       maximizingPlayersTurn: Boolean,
+                       alpha: Int,
+                       beta: Int
+                     ): Int = {
         nodes += 1
 
         def rateRecursive = {
@@ -202,9 +218,13 @@ object MoveTraverse {
                   var myAlpha = alpha
                   var myBeta  = beta
 
-                  val ratings         = {
+                  val ratings = {
                     val sortedMoves = {
-                      if (context.rating.supportsNodeRatingAtDepth(depthLimit - remainingDepth)) {
+                      if (
+                        context.rating.supportsNodeRatingAtDepth(
+                          depthLimit - remainingDepth
+                        )
+                      ) {
                         situation.validMoves.toList.sortBy { nextMoveOption =>
                           situation.applyToMe(nextMoveOption)
                           val quickRating = {
@@ -286,8 +306,8 @@ object MoveTraverse {
 
       }
 
-      var rootAlpha          = Int.MinValue
-      var rootBeta           = Int.MaxValue
+      var rootAlpha = Int.MinValue
+      var rootBeta  = Int.MaxValue
       val isMaximizingPlayer = situation.isTurnOfMaximizingPlayer
 
       def rateMove(move: M) = {
@@ -315,14 +335,21 @@ object MoveTraverse {
         }
       }
 
-      SearchResult(moves.find(_._2 == bestRating).get._1, nodes, leafs, bestRating, cached, cacheHits)
+      SearchResult(
+        moves.find(_._2 == bestRating).get._1,
+        nodes,
+        leafs,
+        bestRating,
+        cached,
+        cacheHits
+      )
     }
 
-    var maxDepth                                = 0
+    var maxDepth = 0
     val result = {
       context.maxLeafEvals match {
         case Some(leafs) =>
-          var fallback   = Option.empty[SearchResult]
+          var fallback = Option.empty[SearchResult]
           val depthRange = 1 to context.maxSearchDepth
           depthRange.iterator
                     .map { tryDepth =>
@@ -346,7 +373,7 @@ object MoveTraverse {
       val bestMoveLog = context.printer.printMove(result.move, context.board)
       val sym         = new DecimalFormatSymbols()
       sym.setGroupingSeparator('.')
-      val df        = new DecimalFormat("###,###,###,###", sym)
+      val df = new DecimalFormat("###,###,###,###", sym)
       val dfSeconds = new DecimalFormat("#0.00")
       println {
         s"Best move is $bestMoveLog " +

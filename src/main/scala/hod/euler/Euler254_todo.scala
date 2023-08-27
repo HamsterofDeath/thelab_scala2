@@ -39,10 +39,10 @@ object Euler254_todo {
           lowest.get(value) match {
             case Some(stored) if stored > digits =>
               lowest.put(value, digits)
-              println(value + "-->" + f(digits) +" > " +digits + " (update)")
+              println(value + "-->" + f(digits) + " > " + digits + " (update)")
             case None =>
               lowest.put(value, digits)
-              println(value + "-->" + f(digits) +" > " +digits)
+              println(value + "-->" + f(digits) + " > " + digits)
             case _ =>
           }
         }

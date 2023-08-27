@@ -17,7 +17,9 @@ public class Euler33 {
                         if (reducedDenominator > 0 && reducedNumerator >= 0) {
                             var reduced = reducedNumerator / (double) reducedDenominator;
                             if (Math.abs(actual - reduced) < 0.00001) {
-                                System.out.println(numerator + "/" + denominator+ " = "+reducedNumerator+"/"+reducedDenominator);
+                                System.out.println(
+                                        numerator + "/" + denominator + " = " + reducedNumerator +
+                                        "/" + reducedDenominator);
                             }
                         }
                     }
@@ -29,7 +31,7 @@ public class Euler33 {
 
     private static int removeDigit(final int numerator, final int remove) {
         final String s = String.valueOf(numerator).replaceAll(String.valueOf(remove), "");
-        if (s.isEmpty() || s.length()==2) {
+        if (s.isEmpty() || s.length() == 2) {
             return -1;
         } else {
             return Integer.parseInt(s);

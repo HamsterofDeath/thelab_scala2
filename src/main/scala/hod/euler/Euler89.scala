@@ -3,15 +3,16 @@ package hod.euler
 import java.io.File
 
 object Euler89 {
-  private def romanToDecimal(char: Char) = char match {
-    case 'I' => 1
-    case 'V' => 5
-    case 'X' => 10
-    case 'L' => 50
-    case 'C' => 100
-    case 'D' => 500
-    case 'M' => 1000
-  }
+  private def romanToDecimal(char: Char) =
+    char match {
+      case 'I' => 1
+      case 'V' => 5
+      case 'X' => 10
+      case 'L' => 50
+      case 'C' => 100
+      case 'D' => 500
+      case 'M' => 1000
+    }
 
   private def highestRoman(value: Int) = {
     validRomans.find { suggestions =>
@@ -64,7 +65,7 @@ object Euler89 {
   }
 
   private def integerToRoman(value: Int) = {
-    var todo   = value
+    var todo = value
     val result = new StringBuilder()
     while (todo > 0) {
       val (roman, singleValue) = highestRoman(todo)
@@ -81,7 +82,7 @@ object Euler89 {
   }
 
   private def solveIt = {
-    val numerals   = new File("resource/roman.txt").slurp.toList
+    val numerals = new File("resource/roman.txt").slurp.toList
     val totalChars = numerals.mkString.length
 
     def optimize(roman: String) = integerToRoman(romanStringToInteger(roman))

@@ -4,8 +4,9 @@ import scala.collection.mutable
 import scala.io.AnsiColor
 import scala.util.{Failure, Success, Try}
 
-import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating, BoardState, GameContext, Move, MoveCacheSupport,
-  MovesExhausted, MutableBoard, OutcomeNotDetermined, WinnerDetermined}
+import hod.other.stuff.boardgames.logic.{AutoPlay, BoardPlayer, BoardPrinter, BoardRating,
+  BoardState, GameContext, Move, MoveCacheSupport, MovesExhausted, MutableBoard,
+  OutcomeNotDetermined, WinnerDetermined}
 
 sealed trait PlaceCoin extends Move {
   def isBlue: Boolean
@@ -90,7 +91,8 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
 
   def stateAsBits: BoardBits = (bluePlayerBits, redPlayerBits)
 
-  def mirroredStateAsBits: BoardBits = (bluePlayerBitsMirrored, redPlayerBitsMirrored)
+  def mirroredStateAsBits: BoardBits =
+    (bluePlayerBitsMirrored, redPlayerBitsMirrored)
 
   def nextPossibleMoveCoordinates =
     validMoves
@@ -121,15 +123,15 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     Array(Red1, Red2, Red3, Red4, Red5, Red6, Red7)
   private val noMoves      = Array.empty[PlaceCoin]
 
-  private val width    = 7
-  private val height   = 6
+  private val width  = 7
+  private val height = 6
   private val maxMoves = width * height
 
-  private var bluePlayerBits            = 0L
-  private var redPlayerBits             = 0L
-  private var bluePlayerBitsMirrored    = 0L
-  private var redPlayerBitsMirrored     = 0L
-  private val filledUpTo                = Array.fill(width)(0)
+  private var bluePlayerBits         = 0L
+  private var redPlayerBits          = 0L
+  private var bluePlayerBitsMirrored = 0L
+  private var redPlayerBitsMirrored  = 0L
+  private val filledUpTo             = Array.fill(width)(0)
   private var bitsForHeightLimitReached = 0
   private var currentPlayerIsMaximizing = true
   private val noWinner                  = Option.empty[Boolean]
@@ -143,11 +145,13 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     (check & bits) == check
   }
 
-  private def countInLine(bits: Long,
-                          x: Int,
-                          y: Int,
-                          xShift: Int,
-                          yShift: Int) = {
+  private def countInLine(
+                           bits: Long,
+                           x: Int,
+                           y: Int,
+                           xShift: Int,
+                           yShift: Int
+                         ) = {
     def inBounds(x: Int, y: Int) = x >= 0 && y >= 0 && x < width && y < height
 
     var found = 0
@@ -168,7 +172,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   }
 
   private def countMaxOwnedInLine(blue: Boolean, x: Int, y: Int): Int = {
-    val bits              = if (blue) bluePlayerBits else redPlayerBits
+    val bits = if (blue) bluePlayerBits else redPlayerBits
     val isCurrentFieldSet = isSet(bits, x, y)
     val currentFieldValue = if (isCurrentFieldSet) 1 else 0
 
@@ -231,7 +235,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
     if (filledUpTo(x) >= height) 1 << x else 0
 
   private def set(firstPlayer: Boolean, x: Int, y: Int): Unit = {
-    val oneBitSet         = {
+    val oneBitSet = {
       nthBitSet(x, y)
     }
     val oneBitSetMirrored = {
@@ -252,7 +256,7 @@ class Connect4Board extends MutableBoard[PlaceCoin] {
   }
 
   private def unset(firstPlayer: Boolean, x: Int, y: Int) = {
-    val oneBitUnSet         = ~nthBitSet(x, y)
+    val oneBitUnSet = ~nthBitSet(x, y)
     val oneBitUnSetMirrored = ~nthBitSetMirrored(x, y)
 
     if (firstPlayer) {

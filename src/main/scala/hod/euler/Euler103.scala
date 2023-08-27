@@ -1,14 +1,15 @@
 package hod.euler
 
-import java.io.File
-import scala.collection.mutable
-
 import hod.EulerUtils
 
 object Euler103 {
   def main(args: Array[String]): Unit = {
 
-    def findLowestSumFor(n: Int, assumedMax: Int, limitSum:Option[Int] = None): Array[Int] = {
+    def findLowestSumFor(
+                          n: Int,
+                          assumedMax: Int,
+                          limitSum: Option[Int] = None
+                        ): Array[Int] = {
       var best = limitSum
       val workingSet = (1 to n).toArray
       val workingSetMax = {
@@ -23,7 +24,7 @@ object Euler103 {
           if (workingSet(where) < workingSetMax(where)) {
             workingSet(where) += 1
           } else {
-            if (where>0) {
+            if (where > 0) {
               incByOne(where - 1)
               workingSet(where) = workingSet(where - 1) + 1
             }

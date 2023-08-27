@@ -8,8 +8,8 @@ object Euler57 {
     }
     case class NormalFraction(numerator: BigInt, denominator: BigInt)
         extends Fraction {
-      def plusOne:NormalFraction = {
-        NormalFraction(numerator+denominator, denominator)
+      def plusOne: NormalFraction = {
+        NormalFraction(numerator + denominator, denominator)
       }
 
       override def toNormalFraction: NormalFraction = this

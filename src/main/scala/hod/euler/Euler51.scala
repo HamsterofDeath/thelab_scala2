@@ -10,8 +10,8 @@ object Euler51 {
       val min = math.pow(10, n - 1).toInt
       val max = math.pow(10, n).toInt
       allPrimes
-      .dropWhile(_ <= min)
-      .takeWhile(_ < max)
+        .dropWhile(_ <= min)
+        .takeWhile(_ < max)
     }
 
     def solveFor(length: Int) = {
@@ -25,8 +25,8 @@ object Euler51 {
           '0' to '9' foreach { maskDigit =>
             val mask = {
               prime
-              .filter(_._1 == maskDigit)
-              .map(_._2)
+                .filter(_._1 == maskDigit)
+                .map(_._2)
             }
             if (mask.nonEmpty) {
               val key = immutable.BitSet(mask: _*)
@@ -40,25 +40,26 @@ object Euler51 {
       val allByPattern = {
         val range = 0 until length
 
-        maskToSeenChars.flatMap { case (pattern, seen) =>
-          val stringsFittingToPattern = {
-            primeStrings.filter { primeString =>
-              val sample = primeString(pattern.head)
-              pattern.forall(e => primeString(e) == sample)
-            }
-          }
-
-          def toStringPattern(primeString: String) = {
-            range.map { index =>
-              if (pattern(index)) {
-                'X'
-              } else {
-                primeString(index)
+        maskToSeenChars.flatMap {
+          case (pattern, seen) =>
+            val stringsFittingToPattern = {
+              primeStrings.filter { primeString =>
+                val sample = primeString(pattern.head)
+                pattern.forall(e => primeString(e) == sample)
               }
-            }.mkString
-          }
+            }
 
-          stringsFittingToPattern.groupBy(toStringPattern)
+            def toStringPattern(primeString: String) = {
+              range.map { index =>
+                if (pattern(index)) {
+                  'X'
+                } else {
+                  primeString(index)
+                }
+              }.mkString
+            }
+
+            stringsFittingToPattern.groupBy(toStringPattern)
         }
       }
 
@@ -68,14 +69,14 @@ object Euler51 {
 
       val largestSize = {
         iterateOverSolutions
-        .maxBy(_._2.size)
-        ._2
-        .size
+          .maxBy(_._2.size)
+          ._2
+          .size
       }
       val smallestWithLargestSize = {
         iterateOverSolutions
-        .filter(_._2.size == largestSize)
-        .minBy(_._2.head)
+          .filter(_._2.size == largestSize)
+          .minBy(_._2.head)
       }
       smallestWithLargestSize
     }
